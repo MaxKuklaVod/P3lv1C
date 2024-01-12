@@ -19,7 +19,7 @@ def STT(path_to_file: str) -> str:
     rec = sr.Recognizer()
 
     with sr.AudioFile(adress) as source:
-        rec.adjust_for_ambient_noise(source)
+        # rec.adjust_for_ambient_noise(source)
         audio = rec.record(source)
         # cleaned_audio=rec.listen(source)
 
