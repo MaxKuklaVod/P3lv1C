@@ -54,6 +54,19 @@ async def main(message):
     await message.delete()
 
 
+"""#Перевод из аудио в текст (STT)
+@dp.message(content_types=[ContentType.VOICE])
+async def audio(message):
+    # Download audio file
+    file_id = await bot.get_file(message.voice.file_id)
+    print(file_id.file_path)
+    await bot.download_file(file_id.file_path, 'audio.oga')
+    print('Audio saved')
+
+    # Speech-to-Text convertation
+    text = STT('audio.oga')"""
+
+
 # Комадна /discription, которая вызывает описание бота
 @dp.message(Command("discription"))
 async def main(message):
