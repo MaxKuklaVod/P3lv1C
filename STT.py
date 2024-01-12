@@ -29,6 +29,7 @@ def STT(path_to_file: str) -> str:
         return ret
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
+        return "Речь не распознана"
     except sr.RequestError as e:
         print(
             "Could not request results from Google Speech Recognition service; {0}".format(
@@ -37,4 +38,4 @@ def STT(path_to_file: str) -> str:
         )
 
 
-# STT('input4.ogg')
+STT('audio.ogg')
