@@ -1,8 +1,9 @@
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.types import ContentType
-from random import randint
 import asyncio
 from STT import STT
+from sorted import Sorting
+from TokenBot import token_bot
 from aiogram.filters.command import Command
 import soundfile as sf
 import numpy as np
@@ -12,17 +13,18 @@ from pathlib import Path
 from aiogram.fsm.state import StatesGroup, State
 
 
-Help_Command = """
+help_command = """
 Отправьте голосовое сообщение и я отправлю вам текст из него🤯
 Список команд:
 /help - команда, показывающая список команд
 /discription - команда, показывающая описание бота
+/save <Категория> <Название> - команда для сохранения картинок/фотографий по категориям
 """
-Start_Command = """
+start_command = """
 Привет!👋 Я бот🤖, который умеет обрабатывать аудио сообщения и присылать их в текстовом формате🤯. \n
 /help - команда для получения списка команд
 """
-Discription_Command = """
+discription_command = """
 Бот умеет писать текст из аудио сообщений🤯.
 Создатели:
 @maxkuklavod🙃
@@ -33,30 +35,63 @@ Discription_Command = """
 """
 
 # Создание бота
-Token_Bot = "6523607857:AAFZ3mAetQ5PgZ2otZVhmrMrMcYiZQlseWk"
-bot = Bot(token=Token_Bot)
+bot = Bot(token=token_bot)
 dp = Dispatcher()
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
 @dp.message(Command("start"))
 async def main(message):
-    await bot.send_message(message.from_user.id, Start_Command)
-    await message.delete()
+    await message.answer(start_command)
 
 
 # Команда /help, которая работает как команда /start
 @dp.message(Command("help"))
 async def main(message):
-    await bot.send_message(message.from_user.id, Help_Command)
-    await message.delete()
+    await message.answer(help_command)
 
 
 # Комадна /discription, которая вызывает описание бота
 @dp.message(Command("discription"))
 async def main(message):
-    await bot.send_message(message.from_user.id, Discription_Command)
-    await message.delete()
+    await message.answer(discription_command)
+
+
+# Команда сортировки по категориям
+@dp.message(Command("save"))
+async def main(message, command):
+    # Если не переданы никакие аргументы, то
+    # command.args будет None
+    if command.args is None:
+        await message.answer("Ошибка: не переданы аргументы")
+        return
+    # Пробуем разделить аргументы на две части по первому встречному пробелу
+    try:
+        category, name = command.args.split(" ", maxsplit=1)
+        if category.count("<") + category.count(">") != 2:
+            await message.answer(
+                "Ошибка: неправильный формат команды. Пример:\n"
+                "/save <Категория> <Название>"
+            )
+        elif name.count("<") + name.count(">") != 2:
+            await message.answer(
+                "Ошибка: неправильный формат команды. Пример:\n"
+                "/save <Категория> <Название>"
+            )
+    # Если получилось меньше двух частей, вылетит ValueError
+    except ValueError:
+        await message.answer(
+            "Ошибка: неправильный формат команды. Пример:\n"
+            "/save <Категория> <Название>"
+        )
+        return
+    sort = Sorting()
+    sort.slovar(category, name, str(message.message_id), str(message.chat.id))
+    
+    #Вывод сообщения по ID
+    chat_id = sort.dict[category][name]["chat"]
+    message_id = sort.dict[category][name]["message"]
+    await bot.send_message(chat_id, "Вот ваше сообщение", reply_to_message_id=message_id)
 
 
 # Перевод из аудио в текст (STT)
@@ -67,19 +102,15 @@ async def audio(message):
     await bot.download_file(file_id.file_path, "audio.ogg")
 
     # Speech-to-Text convertation
-    text = "👋 " + STT("audio.ogg") + " 😘"
+    text = STT("audio.ogg")
 
     await message.reply(text)
 
 
+# Пасхалка с Игорем
 @dp.message(F.content_type == ContentType.TEXT)
 async def Hello(message):
-    if (
-        message.text.count("и че") >= 1
-        or message.text.count("И че") >= 1
-        or message.text.count("и чё") >= 1
-        or message.text.count("И чё") >= 1
-    ):
+    if "и чё" in message.text.lower() or "и че" in message.text.lower():
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAJtC2WhNs5jRDj39GBrG9LGAUFt0U8sAAIvKgACWTYQSgyguNjuPct4NAQ",
@@ -87,4 +118,5 @@ async def Hello(message):
 
 
 # Функция, которая запускает программу в боте
-asyncio.run(dp.start_polling(bot))
+if __name__ == "__main__":
+    asyncio.run(dp.start_polling(bot))
