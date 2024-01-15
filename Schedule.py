@@ -1,4 +1,5 @@
 from selenium import webdriver
+from forlabs import mail, password_text
 import datetime
 import pytz
 from selenium.webdriver.common.by import By
@@ -9,15 +10,14 @@ from selenium.common.exceptions import NoSuchElementException
 # selenium
 # pytz
 
+# Данные для входа
+mail = mail
+password_text = password_text
 # Запись расписания в переменную
-def Schedule():
+def classes(mail, password_text):
     # Драйвер для взаимодействия с браузером
     driver = webdriver.Firefox()
     driver.get("https://bki.forlabs.ru/app/login")
-
-    # Данные для входа
-    mail = "albert.nosachenko@gmail.com"
-    password_text = "5Mama24081593575"
 
     # Процесс входа в систему Forlabs
     login = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")
@@ -39,7 +39,8 @@ def Schedule():
 
     # Переходим на вкладку с расписанием
     driver.get("https://bki.forlabs.ru/app/schedule")
-    time.sleep(5)
+    time.sleep(3)
+
 
     # День недели
     current_day = datetime.datetime.today().weekday() + 1
@@ -62,12 +63,6 @@ def Schedule():
                     break
 
     driver.close()
-    return schedule
-
-
-# Вывод следующей пары
-def lesson(schedule):
-    result = None
 
     # Время для вычисления следующей пары
     time_zone = pytz.timezone("Asia/Irkutsk")
@@ -78,9 +73,31 @@ def lesson(schedule):
     for t in schedule.keys():
         if current_time < t and lessons_count > 0:
             result = (f"Следующая пара: {schedule[t]}, начинается в {t}")
-            break
+            return [result, schedule.keys()]
         else:
-            result = "Дальше пар не будет"
-    return result
+            pass
+    return ["Дальше пар не будет", schedule]
 
-print(lesson(Schedule()))
+def repeater(func, mail, password):
+    res = func(mail, password)
+    print(res[0])
+    time_zone = pytz.timezone("Asia/Irkutsk")
+
+    starts = ["06:20"]
+    starts.extend(res[1])
+
+    for i in range(len(starts)):
+        starts[i] = datetime.datetime.strptime(starts[i], "%H:%M").time()
+        starts[i] = str(datetime.timedelta(hours=starts[i].hour, minutes=starts[i].minute) - datetime.timedelta(minutes = 20)).replace(":","")
+        if len(starts[i]) < 6:
+            starts[i] = "0" + starts[i]
+
+    while True:
+        current_time = str(datetime.datetime.now(time_zone).strftime("%H:%M:%S")).replace(":", "")
+        if current_time in starts:
+            repeater(func,mail,password)
+
+
+repeater(classes,mail,password_text)
+
+
