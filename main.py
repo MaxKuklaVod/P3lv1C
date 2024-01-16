@@ -13,12 +13,19 @@ from pathlib import Path
 from aiogram.fsm.state import StatesGroup, State
 
 
+# Создадим класс состояний
+class states(StatesGroup):
+  categor = State()
+  name = State()
+
+
 help_command = """
 Отправьте голосовое сообщение и я отправлю вам текст из него🤯
 Список команд:
 /help - команда, показывающая список команд
 /discription - команда, показывающая описание бота
 /save <Категория> <Название> - команда для сохранения картинок/фотографий по категориям
+/savedfiles - команда, с помощью которой вы можете обратиться к сохраненным сообщениям
 """
 start_command = """
 Привет!👋 Я бот🤖, который умеет обрабатывать аудио сообщения и присылать их в текстовом формате🤯. \n
@@ -32,6 +39,22 @@ discription_command = """
 @yourocculticT20🧐
 Руководитель:
 @jezvGG💀
+"""
+savedfiles_command = """
+Выберете категорию сохранения, в которой хотите найти свои файлы.
+Категории:
+
+"""
+savedfiles_command_continue = """
+Если вы выбрали, напишите ее в новом сообщении так, как она указана здесь.
+"""
+categories_message = """
+Выберете название сохранения, в котором хотите найти свои файлы.
+Названия:
+
+"""
+categories_message_continue = """
+Если вы выбрали, напишите его в новом сообщении так, как оно указано здесь.
 """
 
 # Создание бота
@@ -58,6 +81,7 @@ async def main(message):
 
 
 # Команда сортировки по категориям
+sort = Sorting()
 @dp.message(Command("save"))
 async def main(message, command):
     # Если не переданы никакие аргументы, то
@@ -85,13 +109,41 @@ async def main(message, command):
             "/save <Категория> <Название>"
         )
         return
-    sort = Sorting()
+    global sort
     sort.slovar(category, name, str(message.message_id), str(message.chat.id))
+
     
+#Вывод сообщения по категориям
+@dp.message(Command("savedfiles"))
+async def main(message, state):
+    global sort
+    slova = ""
+    await message.answer(savedfiles_command + sort.keyses(slova) + savedfiles_command_continue)
+    await state.set_state(states.categor)
+
+categor = ''
+
+@dp.message(F.text, states.categor)
+async def main(message, state):
+    global sort, categor
+    slova = ""
+    # Обновляем в нашем классе значение categor
+    await state.update_data(categor = message.text)
+    categor = await state.get_data()
+    await message.answer(categories_message + sort.valueses(slova, categor['categor']) + categories_message_continue)
+    await state.set_state(states.name)
+
+@dp.message(F.text, states.name)
+async def main(message, state):
+    global sort, categor
+    # Обновляем в нашем классе значение categor
+    await state.update_data(name = message.text)
+    name = await state.get_data()
     #Вывод сообщения по ID
-    chat_id = sort.dict[category][name]["chat"]
-    message_id = sort.dict[category][name]["message"]
+    chat_id = sort.dict[categor['categor']][name['name']]["chat"]
+    message_id = sort.dict[categor['categor']][name['name']]["message"]
     await bot.send_message(chat_id, "Вот ваше сообщение", reply_to_message_id=message_id)
+    await state.clear()
 
 
 # Перевод из аудио в текст (STT)
