@@ -1,5 +1,6 @@
 import soundfile as sf
 import numpy as np
+import requests
 import speech_recognition as sr
 from os import path
 from pathlib import Path
