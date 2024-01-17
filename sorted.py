@@ -10,10 +10,12 @@ class Sorting:
 
     def keyses(self, slova):
         for categories in self.dict:
-            slova += f"{categories} \n"
+            slova.append(categories)
+        slova = list(set(slova))
         return slova
 
     def valueses(self, slova, categor):
         for values in self.dict[categor]:
-            slova += f"{values} \n"
+            slova.append(values)
+        slova = list(set(slova))
         return slova

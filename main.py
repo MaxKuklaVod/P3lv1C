@@ -11,12 +11,8 @@ import speech_recognition as sr
 from os import path
 from pathlib import Path
 from aiogram.fsm.state import StatesGroup, State
-
-
-# Создадим класс состояний
-class states(StatesGroup):
-  categor = State()
-  name = State()
+from aiogram.types import InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 help_command = """
@@ -42,19 +38,9 @@ discription_command = """
 """
 savedfiles_command = """
 Выберете категорию сохранения, в которой хотите найти свои файлы.
-Категории:
-
-"""
-savedfiles_command_continue = """
-Если вы выбрали, напишите ее в новом сообщении так, как она указана здесь.
 """
 categories_message = """
 Выберете название сохранения, в котором хотите найти свои файлы.
-Названия:
-
-"""
-categories_message_continue = """
-Если вы выбрали, напишите его в новом сообщении так, как оно указано здесь.
 """
 
 # Создание бота
@@ -82,6 +68,11 @@ async def main(message):
 
 # Команда сортировки по категориям
 sort = Sorting()
+slova = []
+name = []
+categories = []
+
+
 @dp.message(Command("save"))
 async def main(message, command):
     # Если не переданы никакие аргументы, то
@@ -92,16 +83,6 @@ async def main(message, command):
     # Пробуем разделить аргументы на две части по первому встречному пробелу
     try:
         category, name = command.args.split(" ", maxsplit=1)
-        if category.count("<") + category.count(">") != 2:
-            await message.answer(
-                "Ошибка: неправильный формат команды. Пример:\n"
-                "/save <Категория> <Название>"
-            )
-        elif name.count("<") + name.count(">") != 2:
-            await message.answer(
-                "Ошибка: неправильный формат команды. Пример:\n"
-                "/save <Категория> <Название>"
-            )
     # Если получилось меньше двух частей, вылетит ValueError
     except ValueError:
         await message.answer(
@@ -109,41 +90,75 @@ async def main(message, command):
             "/save <Категория> <Название>"
         )
         return
-    global sort
-    sort.slovar(category, name, str(message.message_id), str(message.chat.id))
+    global sort, categories
+    sort.slovar("Другое", name, str(message.message_id), str(message.chat.id))
+    await message.reply("Ваше сообщение сохранено")
 
-    
-#Вывод сообщения по категориям
+
+# Вывод сообщения по категориям, работает отлично
 @dp.message(Command("savedfiles"))
-async def main(message, state):
-    global sort
-    slova = ""
-    await message.answer(savedfiles_command + sort.keyses(slova) + savedfiles_command_continue)
-    await state.set_state(states.categor)
+async def main(message):
+    global sort, slova
 
-categor = ''
+    # Инициализируем клавиатуру
+    builder = InlineKeyboardBuilder()
 
-@dp.message(F.text, states.categor)
-async def main(message, state):
-    global sort, categor
-    slova = ""
-    # Обновляем в нашем классе значение categor
-    await state.update_data(categor = message.text)
-    categor = await state.get_data()
-    await message.answer(categories_message + sort.valueses(slova, categor['categor']) + categories_message_continue)
-    await state.set_state(states.name)
+    sort.keyses(slova)
+    slova = list(set(slova))
 
-@dp.message(F.text, states.name)
-async def main(message, state):
-    global sort, categor
-    # Обновляем в нашем классе значение categor
-    await state.update_data(name = message.text)
-    name = await state.get_data()
-    #Вывод сообщения по ID
-    chat_id = sort.dict[categor['categor']][name['name']]["chat"]
-    message_id = sort.dict[categor['categor']][name['name']]["message"]
-    await bot.send_message(chat_id, "Вот ваше сообщение", reply_to_message_id=message_id)
-    await state.clear()
+    for i in range(len(slova)):
+        builder.add(InlineKeyboardButton(text=slova[i], callback_data="num_" + str(i)))
+
+    # Указываем клавиатуру в ответе
+    builder.adjust(3)
+    await message.answer(savedfiles_command, reply_markup=builder.as_markup())
+
+
+# Работает отлично, показывает наименование сохраненок
+@dp.callback_query(F.data.startswith("num_"))
+async def callback(callback):
+    global sort, slova, name
+
+    action = callback.data.split("_")[1]
+    builder = InlineKeyboardBuilder()
+
+    slova = list(set(slova))
+
+    for i in range(len(slova)):
+        if action == str(i):
+            sort.valueses(name, slova[i])
+            name = list(set(name))
+            for j in range(len(name)):
+                builder.add(
+                    InlineKeyboardButton(
+                        text=name[j], callback_data="numm_" + str(j) + str(j)
+                    )
+                )
+    builder.adjust(3)
+    await callback.message.answer(categories_message, reply_markup=builder.as_markup())
+
+
+# Работает отлично, возвращает сохраненное ранее сообщение
+@dp.callback_query(F.data.startswith("numm_"))
+async def callback(callback):
+    global sort, slova, name
+
+    slova = list(set(slova))
+    name = list(set(name))
+
+    action = callback.data.split("_")[1]
+
+    for i in range(len(slova)):
+        sort.valueses(name, slova[i])
+        for j in range(len(name)):
+            if action == str(i) * 2:
+                chatid = sort.dict[slova[i]][name[j]]["chat"]
+                message_id = sort.dict[slova[i]][name[j]]["message"]
+            else:
+                continue
+    await bot.send_message(
+        chat_id=chatid, text="Вот ваше сообщение", reply_to_message_id=message_id
+    )
 
 
 # Перевод из аудио в текст (STT)
