@@ -1,19 +1,19 @@
-from aiogram import Bot, Dispatcher, F, types
+from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT_whisper
 from sorted import Sorting
-from TokenBot import token_bot
+import json
 from aiogram.filters.command import Command
-import soundfile as sf
-import numpy as np
-import speech_recognition as sr
-from os import path
-from pathlib import Path
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
+with open("tokens.json") as complex_data:
+    data = complex_data.read()
+    numbers = json.loads(data)
+
+main_token = numbers["main_token"]
 
 help_command = """
 Отправьте голосовое сообщение и я отправлю вам текст из него🤯
@@ -28,7 +28,7 @@ start_command = """
 /help - команда для получения списка команд
 """
 discription_command = """
-Бот умеет писать текст из аудио сообщений🤯.
+Бот умеет писать текст из аудио сообщений🤯. Также позволяет сохранять нужные сообщения по категориям.
 Создатели:
 @maxkuklavod🙃
 @Albert_Nosachenko🤐
@@ -44,7 +44,7 @@ categories_message = """
 """
 
 # Создание бота
-bot = Bot(token=token_bot)
+bot = Bot(token=main_token)
 dp = Dispatcher()
 
 
@@ -54,7 +54,7 @@ async def main(message):
     await message.answer(start_command)
 
 
-# Команда /help, которая работает как команда /start
+# Команда /help, которая отправляет список команд
 @dp.message(Command("help"))
 async def main(message):
     await message.answer(help_command)
@@ -66,13 +66,14 @@ async def main(message):
     await message.answer(discription_command)
 
 
-# Команда сортировки по категориям
+# Создание глобальных переменных
 sort = Sorting()
 slova = []
 name = []
 categories = []
 
 
+# Команда для сохранения сообщения
 @dp.message(Command("save"))
 async def main(message, command):
     # Если не переданы никакие аргументы, то
@@ -95,7 +96,7 @@ async def main(message, command):
     await message.reply("Ваше сообщение сохранено")
 
 
-# Вывод сообщения по категориям, работает отлично
+# Вывод сообщения по категориям
 @dp.message(Command("savedfiles"))
 async def main(message):
     global sort, slova
@@ -114,7 +115,7 @@ async def main(message):
     await message.answer(savedfiles_command, reply_markup=builder.as_markup())
 
 
-# Работает отлично, показывает наименование сохраненок
+# Вовод сохраненных названий
 @dp.callback_query(F.data.startswith("num_"))
 async def callback(callback):
     global sort, slova, name
@@ -138,7 +139,7 @@ async def callback(callback):
     await callback.message.answer(categories_message, reply_markup=builder.as_markup())
 
 
-# Работает отлично, возвращает сохраненное ранее сообщение
+# Возвращает сохраненное ранее сообщение, по выбранному названию
 @dp.callback_query(F.data.startswith("numm_"))
 async def callback(callback):
     global sort, slova, name
