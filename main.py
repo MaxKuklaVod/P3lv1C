@@ -1,7 +1,7 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
-from STT import STT_whisper
+from STT import STT_whisper, STT
 from sorted import Sorting
 import json
 from aiogram.filters.command import Command
@@ -170,7 +170,7 @@ async def audio(message):
     await bot.download_file(file_id.file_path, "audio.ogg")
 
     # Speech-to-Text convertation
-    text = STT_whisper("audio.ogg")
+    text = STT("audio.ogg")
 
     await message.reply(text)
 
