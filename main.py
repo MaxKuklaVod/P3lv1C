@@ -2,7 +2,6 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT_whisper, STT
-from sorted import Sorting
 import json
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
@@ -11,9 +10,9 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 with open("tokens.json") as complex_data:
     data = complex_data.read()
-    numbers = json.loads(data)
+    tokens = json.loads(data)
 
-main_token = numbers["main_token"]
+main_token = tokens["main_token"]
 
 help_command = """
 Отправьте голосовое сообщение и я отправлю вам текст из него🤯
@@ -47,6 +46,10 @@ categories_message = """
 bot = Bot(token=main_token)
 dp = Dispatcher()
 
+# Создание глобальных переменных
+sort = []
+categories = ["Другое"]
+action = ''
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
 @dp.message(Command("start"))
@@ -64,13 +67,6 @@ async def main(message):
 @dp.message(Command("discription"))
 async def main(message):
     await message.answer(discription_command)
-
-
-# Создание глобальных переменных
-sort = Sorting()
-slova = []
-name = []
-categories = []
 
 
 # Команда для сохранения сообщения
@@ -92,49 +88,36 @@ async def main(message, command):
         )
         return
     global sort, categories
-    sort.slovar("Другое", name, str(message.message_id), str(message.chat.id))
+    sort.append({"Категория": categories[0], "Имя": name, "Chat_id": str(message.chat.id), "Message_id": str(message.message_id)})
     await message.reply("Ваше сообщение сохранено")
 
 
 # Вывод сообщения по категориям
 @dp.message(Command("savedfiles"))
 async def main(message):
-    global sort, slova
+    global categories
 
     # Инициализируем клавиатуру
     builder = InlineKeyboardBuilder()
 
-    sort.keyses(slova)
-    slova = list(set(slova))
-
-    for i in range(len(slova)):
-        builder.add(InlineKeyboardButton(text=slova[i], callback_data="num_" + str(i)))
+    builder.add(*[InlineKeyboardButton(text = item, callback_data = "num_" + item) for item in categories])
 
     # Указываем клавиатуру в ответе
     builder.adjust(3)
     await message.answer(savedfiles_command, reply_markup=builder.as_markup())
 
 
-# Вовод сохраненных названий
+# Вывод сохраненных названий
 @dp.callback_query(F.data.startswith("num_"))
 async def callback(callback):
-    global sort, slova, name
+    global sort, action
 
     action = callback.data.split("_")[1]
     builder = InlineKeyboardBuilder()
 
-    slova = list(set(slova))
+    category = filter(lambda x: x['Категория'] == action, sort)
+    builder.add(*[InlineKeyboardButton(text = item["Имя"], callback_data="numm_" + item["Имя"]) for item in category])
 
-    for i in range(len(slova)):
-        if action == str(i):
-            sort.valueses(name, slova[i])
-            name = list(set(name))
-            for j in range(len(name)):
-                builder.add(
-                    InlineKeyboardButton(
-                        text=name[j], callback_data="numm_" + str(j) + str(j)
-                    )
-                )
     builder.adjust(3)
     await callback.message.answer(categories_message, reply_markup=builder.as_markup())
 
@@ -142,23 +125,16 @@ async def callback(callback):
 # Возвращает сохраненное ранее сообщение, по выбранному названию
 @dp.callback_query(F.data.startswith("numm_"))
 async def callback(callback):
-    global sort, slova, name
+    global sort, action
 
-    slova = list(set(slova))
-    name = list(set(name))
+    name = callback.data.split("_")[1]
 
-    action = callback.data.split("_")[1]
+    category = filter(lambda x: x['Категория'] == action, sort)
+    category = filter(lambda x: x['Имя'] == name, category)
 
-    for i in range(len(slova)):
-        sort.valueses(name, slova[i])
-        for j in range(len(name)):
-            if action == str(i) * 2:
-                chatid = sort.dict[slova[i]][name[j]]["chat"]
-                message_id = sort.dict[slova[i]][name[j]]["message"]
-            else:
-                continue
-    await bot.send_message(
-        chat_id=chatid, text="Вот ваше сообщение", reply_to_message_id=message_id
+    for item in category:
+        await bot.send_message(
+        chat_id = item['Chat_id'], text="Вот ваше сообщение", reply_to_message_id = item["Message_id"]
     )
 
 
