@@ -66,9 +66,6 @@ def STT(path_to_file: str) -> str:
 
 #Пунктуация. Принимает текст str
 def Punct(text):
-    #запрос
-    cur_text="Перепиши текст в квадратных скобках с добавленной в него по необходимости пунктуацией: \n[" +text +"]"
-
     #апи
     response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": "Bearer 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"}, json={"inputs":text,})
 
@@ -85,4 +82,4 @@ def Punct(text):
         
     
 #Пример
-print(Punct('text_name"))
+print(Punct('text for punctuation"))
