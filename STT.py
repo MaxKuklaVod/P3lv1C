@@ -75,7 +75,7 @@ def Punct(text):
     #вывод
     try:
         #print(output[0]["generated_text"])
-        return output[0]["generated_text"].replace(r"\n",'\n'))
+        return output[0]["generated_text"].replace(r"\n ",'\n')
     except KeyError:
         return text
 
