@@ -67,7 +67,7 @@ def STT(path_to_file: str) -> str:
 #Пунктуация. Принимает текст str
 def Punct(text):
     #апи
-    response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": "Bearer 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"}, json={"inputs":text,})
+    response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": "Bearer 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"}, json={"inputs":text,"wait_for_model":True,})
 
     #Ответ
     output=response.json()
