@@ -7,15 +7,15 @@ from pathlib import Path
 
 
 class data_base:
-    #имя, ключи
+    #РёРјСЏ, РєР»СЋС‡Рё
     __name="intituled"
     __keys=[]
     
 
-    #путь к файлу
+    #РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ
     __file_name=""
     
-    #категории
+    #РєР°С‚РµРіРѕСЂРёРё
     __categories={}
     
 
@@ -24,8 +24,8 @@ class data_base:
     __cursor=None 
     
 
-    #посздаём файл и получаем категории  
-    #Словарь типа {'столбец':'значение'}
+    #СЃРѕР·РґР°С‘Рј С„Р°Р№Р» Рё РїРѕР»СѓС‡Р°РµРј РєР°С‚РµРіРѕСЂРёРё  
+    #РЎР»РѕРІР°СЂСЊ С‚РёРїР° {'СЃС‚РѕР»Р±РµС†':'Р·РЅР°С‡РµРЅРёРµ'}
     def __init__(self,file:str="untituled.bd",cats:dict={}):
         self.name=file
         self.file_name=file 
@@ -33,7 +33,7 @@ class data_base:
         self.categories=cats
         
 
-    #имя файла
+    #РёРјСЏ С„Р°Р№Р»Р°
     @property
     def name(self):
         return self.__name
@@ -41,17 +41,17 @@ class data_base:
     @name.setter
     def name(self,value:str):
         if not isinstance(value,str):
-            raise Exception("Неверный аргумент")
+            raise Exception("РќРµРІРµСЂРЅС‹Р№ Р°СЂРіСѓРјРµРЅС‚")
 
         value_stripped=value.strip()
         
         if value_stripped=="":
-            raise Exception("Неверный аргумент")
+            raise Exception("РќРµРІРµСЂРЅС‹Р№ Р°СЂРіСѓРјРµРЅС‚")
         
         self.__name=value_stripped
 
 
-    #полный путь к файлу
+    #РїРѕР»РЅС‹Р№ РїСѓС‚СЊ Рє С„Р°Р№Р»Сѓ
     @property 
     def file_name(self):
         return self.__file_name 
@@ -67,7 +67,7 @@ class data_base:
 
     
 
-    #обработка категорий и их параметров
+    #РѕР±СЂР°Р±РѕС‚РєР° РєР°С‚РµРіРѕСЂРёР№ Рё РёС… РїР°СЂР°РјРµС‚СЂРѕРІ
     @property
     def categories(self):
         return self.__categories 
@@ -78,7 +78,7 @@ class data_base:
         if not isinstance(value,dict):
             raise Exception('wrong argument')
         
-        #названия категорий
+        #РЅР°Р·РІР°РЅРёСЏ РєР°С‚РµРіРѕСЂРёР№
         self.__keys=list(value.keys())
 
         
@@ -87,7 +87,7 @@ class data_base:
 
         self.__categories=value
     
-    #старт
+    #СЃС‚Р°СЂС‚
     def start(self):
         print(self.__file_name)
         try:
@@ -97,19 +97,19 @@ class data_base:
             raise Exception("error")
         
 
-    #стоп
+    #СЃС‚РѕРї
     def stop(self):
         self.__connect.close()
         
-    #создание таблицы
+    #СЃРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†С‹
     def create(self):
-        #сборка команды и имени таблицы
+        #СЃР±РѕСЂРєР° РєРѕРјР°РЅРґС‹ Рё РёРјРµРЅРё С‚Р°Р±Р»РёС†С‹
         create_comand=f"create table if not exists {self.name.strip('.bd')}("
     
         
 
 
-        #добавляем категории в команду
+        #РґРѕР±Р°РІР»СЏРµРј РєР°С‚РµРіРѕСЂРёРё РІ РєРѕРјР°РЅРґСѓ
         for column in self.__keys:
             create_comand+= f'{column} {self.categories[column]}, '
             
@@ -128,7 +128,7 @@ class data_base:
         self.__connect.commit()
         
 
-    #вставка в таблицу
+    #РІСЃС‚Р°РІРєР° РІ С‚Р°Р±Р»РёС†Сѓ
     def insert(self, *args):
         
             
@@ -153,19 +153,19 @@ class data_base:
         
         self.__connect.commit()
         
-    #взятие. Словарь типа {'столбец':'значение'}
+    #РІР·СЏС‚РёРµ. РЎР»РѕРІР°СЂСЊ С‚РёРїР° {'СЃС‚РѕР»Р±РµС†':'Р·РЅР°С‡РµРЅРёРµ'}
     def get (self,args:dict):
         if not isinstance(args,dict):
-            raise Exception("Нужен словарь")
+            raise Exception("РќСѓР¶РµРЅ СЃР»РѕРІР°СЂСЊ")
         
         get_command=f'''select * from {self.name.strip('.bd')} where'''
         
-        #ключи условий
+        #РєР»СЋС‡Рё СѓСЃР»РѕРІРёР№
         args_keys=list(args.keys())
         #args_args=list(args.items())
         
         for key in args_keys:
-            #проверка на ошибку
+            #РїСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєСѓ
             if key in self.__keys:
                 get_command+=f' {key} = "{args[key]}" and'
                 
@@ -185,10 +185,3 @@ class data_base:
 
 
 
-        
-A=data_base("messeges.bd",{'id':'integer PRIMARY KEY','name':'text','salary':'real'})
-A.start()
-
-print(A.get({'name':'Vova','salary':'1000'}))
-
-A.stop()
