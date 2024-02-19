@@ -179,8 +179,8 @@ class data_base:
             return row
 
         
-            
-        
+
+A=data_base("messeges.bd",{'id':'integer PRIMARY KEY','name':'text','salary':'real'})
    
 
 
