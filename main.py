@@ -1,12 +1,14 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
-from STT import STT_whisper, STT
+from STT import STT, Punct
+
+# from Schedule import classes
 import json
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
+from threading import Timer
 
 with open("tokens.json") as complex_data:
     data = complex_data.read()
@@ -21,6 +23,7 @@ help_command = """
 /discription - команда, показывающая описание бота
 /save <Категория> <Название> - команда для сохранения картинок/фотографий по категориям
 /savedfiles - команда, с помощью которой вы можете обратиться к сохраненным сообщениям
+/deletesavedfiles - команда для удаления сохранённых сообщений, доступна только админам
 """
 start_command = """
 Привет!👋 Я бот🤖, который умеет обрабатывать аудио сообщения и присылать их в текстовом формате🤯. \n
@@ -41,6 +44,28 @@ savedfiles_command = """
 categories_message = """
 Выберете название сохранения, в котором хотите найти свои файлы.
 """
+deletesavedfiles_command = """
+Выберете категорию, в которой хотите удалить сохраненные сообщения.
+"""
+deletecategories_message = """
+Выберете название сохранения, которое вы хотите удалить.
+"""
+
+
+# Цикл вызова функции раз в 10 минут
+everytenmin = """я получается в первый раз когда использовал это вот сообщение он мне хорошо написал 
+все запятые и расставил там потом вот произвести при обновил потому что он просто перестал отвечать 
+мне как будто бы первый раз по скорее всего кого-то тоже активирован наверное не знаю и сейчас я снова
+открыл вроде бы ставить запятые"""
+
+
+def punctuation():
+    _ = Punct(everytenmin)
+    print(_)
+    Timer(600, punctuation).start()
+
+
+punctuation()
 
 # Создание бота
 bot = Bot(token=main_token)
@@ -49,7 +74,9 @@ dp = Dispatcher()
 # Создание глобальных переменных
 sort = []
 categories = ["Другое"]
-action = ''
+action = ""
+Admin_ID = 0
+
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
 @dp.message(Command("start"))
@@ -67,6 +94,15 @@ async def main(message):
 @dp.message(Command("discription"))
 async def main(message):
     await message.answer(discription_command)
+
+
+"""# Команда для запуска рассылки напоминаний о расписании
+@dp.message(Command("zaprasp"))
+async def main(message):
+    lessons = classes()
+    await message.answer("Расписание запущено")
+
+    await message.answer(lessons)"""
 
 
 # Команда для сохранения сообщения
@@ -88,8 +124,98 @@ async def main(message, command):
         )
         return
     global sort, categories
-    sort.append({"Категория": categories[0], "Имя": name, "Chat_id": str(message.chat.id), "Message_id": str(message.message_id)})
-    await message.reply("Ваше сообщение сохранено")
+    if category not in categories:
+        sort.append(
+            {
+                "Категория": "Другое",
+                "Имя": name,
+                "Chat_id": str(message.chat.id),
+                "Message_id": str(message.message_id),
+            }
+        )
+        await message.reply(
+            f"Так как еще нет категории <{category}> Ваше сообщение сохранено, в категорию: <Другое>"
+        )
+    else:
+        sort.append(
+            {
+                "Категория": categories,
+                "Имя": name,
+                "Chat_id": str(message.chat.id),
+                "Message_id": str(message.message_id),
+            }
+        )
+        await message.reply("Ваше сообщение сохранено")
+
+
+# Команда для удаления сохраненных сообщений, доступнатолько админу
+@dp.message(Command("deletesavedfiles"))
+async def main(message):
+    truefalse = True
+    member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+    for x in member:
+        if "member" in x:
+            truefalse = False
+        break
+    if truefalse == False:
+        await message.answer("Вы не обладаете правами администратора")
+    else:
+        global categories, Admin_ID
+
+        Admin_ID = message.from_user.id
+
+        # Инициализируем клавиатуру
+        builder = InlineKeyboardBuilder()
+
+        builder.add(
+            *[
+                InlineKeyboardButton(text=item, callback_data="del_" + item)
+                for item in categories
+            ]
+        )
+
+        # Указываем клавиатуру в ответе
+        builder.adjust(3)
+        await message.answer(deletesavedfiles_command, reply_markup=builder.as_markup())
+
+
+# Вывод сохраненных названий для удаления
+@dp.callback_query(F.data.startswith("del_"))
+async def callback(callback):
+    global sort, action, Admin_ID
+    if callback.from_user.id == Admin_ID:
+        action = callback.data.split("_")[1]
+        builder = InlineKeyboardBuilder()
+
+        category = filter(lambda x: x["Категория"] == action, sort)
+        builder.add(
+            *[
+                InlineKeyboardButton(
+                    text=item["Имя"], callback_data="delet_" + item["Message_id"]
+                )
+                for item in category
+            ]
+        )
+
+        builder.adjust(3)
+        await callback.message.answer(
+            deletecategories_message, reply_markup=builder.as_markup()
+        )
+
+
+# Удаление сохраненного ранее сообщения
+@dp.callback_query(F.data.startswith("delet_"))
+async def callback(callback):
+    global sort, Admin_ID
+
+    if callback.from_user.id == Admin_ID:
+        message = callback.data.split("_")[1]
+
+        category = filter(lambda x: x["Message_id"] == message, sort)
+
+        for item in category:
+            sort.remove(item)
+        await callback.message.answer("Сохранённое сообщение удалено")
 
 
 # Вывод сообщения по категориям
@@ -100,7 +226,12 @@ async def main(message):
     # Инициализируем клавиатуру
     builder = InlineKeyboardBuilder()
 
-    builder.add(*[InlineKeyboardButton(text = item, callback_data = "num_" + item) for item in categories])
+    builder.add(
+        *[
+            InlineKeyboardButton(text=item, callback_data="num_" + item)
+            for item in categories
+        ]
+    )
 
     # Указываем клавиатуру в ответе
     builder.adjust(3)
@@ -115,8 +246,15 @@ async def callback(callback):
     action = callback.data.split("_")[1]
     builder = InlineKeyboardBuilder()
 
-    category = filter(lambda x: x['Категория'] == action, sort)
-    builder.add(*[InlineKeyboardButton(text = item["Имя"], callback_data="numm_" + item["Имя"]) for item in category])
+    category = filter(lambda x: x["Категория"] == action, sort)
+    builder.add(
+        *[
+            InlineKeyboardButton(
+                text=item["Имя"], callback_data="numm_" + item["Message_id"]
+            )
+            for item in category
+        ]
+    )
 
     builder.adjust(3)
     await callback.message.answer(categories_message, reply_markup=builder.as_markup())
@@ -125,30 +263,37 @@ async def callback(callback):
 # Возвращает сохраненное ранее сообщение, по выбранному названию
 @dp.callback_query(F.data.startswith("numm_"))
 async def callback(callback):
-    global sort, action
+    global sort
 
-    name = callback.data.split("_")[1]
+    message = callback.data.split("_")[1]
 
-    category = filter(lambda x: x['Категория'] == action, sort)
-    category = filter(lambda x: x['Имя'] == name, category)
+    category = filter(lambda x: x["Message_id"] == message, sort)
 
     for item in category:
         await bot.send_message(
-        chat_id = item['Chat_id'], text="Вот ваше сообщение", reply_to_message_id = item["Message_id"]
-    )
+            chat_id=item["Chat_id"],
+            text="Вот ваше сообщение",
+            reply_to_message_id=item["Message_id"],
+        )
 
 
 # Перевод из аудио в текст (STT)
 @dp.message(F.content_type == ContentType.VOICE)
 async def audio(message):
+    edittext = ""
     # Download audio file
     file_id = await bot.get_file(message.voice.file_id)
     await bot.download_file(file_id.file_path, "audio.ogg")
 
     # Speech-to-Text convertation
-    text = STT("audio.ogg")
+    edittext = STT("audio.ogg")
 
-    await message.reply(text)
+    msg = await message.reply(edittext)
+
+    punctual = Punct(edittext)
+    await bot.edit_message_text(
+        chat_id=str(message.chat.id), message_id=str(msg.message_id), text=punctual
+    )
 
 
 # Пасхалка с Игорем

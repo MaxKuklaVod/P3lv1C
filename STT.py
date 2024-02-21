@@ -51,7 +51,6 @@ def STT(path_to_file: str) -> str:
     # вывод
     try:
         ret = rec.recognize_google(audio, language="ru-RU")
-        print(ret)
         return ret
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
@@ -74,13 +73,7 @@ def Punct(text):
     
     #вывод
     try:
-        #print(output[0]["generated_text"])
         return output[0]["generated_text"].replace(r"\n ",'\n')
     except KeyError:
         print(output)
         return Punct(text)
-
-        
-    
-#Пример
-print(Punct('text for punctuation"))
