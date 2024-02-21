@@ -26,11 +26,11 @@ class data_base:
 
     #создаём файл и получаем категории  
     #Словарь типа {'столбец':'значение'}
-    def __init__(self,file:str="untituled.bd",cats:dict={}):
+    def __init__(self,file:str="untituled.bd"):
         self.name=file
         self.file_name=file 
 
-        self.categories=cats
+        
         
 
     #имя файла
@@ -102,9 +102,16 @@ class data_base:
         self.__connect.close()
         
     #создание таблицы
-    def create(self):
+    def create(self,name:str,cats:dict={}):
+        
+        self.categories=cats
+
+
         #сборка команды и имени таблицы
-        create_comand=f"create table if not exists {self.name.strip('.bd')}("
+        if name=="":
+            name=self.name.strip('.bd')
+        name=name.replace(" ","_")
+        create_comand=f"create table if not exists {name}("
     
         
 
@@ -129,10 +136,16 @@ class data_base:
         
 
     #вставка в таблицу
-    def insert(self, *args):
+    def insert(self,name:str, cats:dict):
         
+        self.categories=cats
+        
+        if name=="":
+            name=self.name.strip('.db')
             
-        table_name=f"{self.name.strip('.bd')}("
+        name=name.replace(" ","_")
+            
+        table_name=f"{name}("
         
 
 
@@ -140,25 +153,30 @@ class data_base:
         for column in self.__keys:
             table_name+=column+', '
             
-        table_name=table_name.strip(', ')+')'
+        table_name=table_name[:-2]+')'
 
 
 
 
-        insert_comand=f'''INSERT INTO {table_name} VALUES(?,{' ?,'*(len(args)-2)} ?)'''
+
+        insert_comand=f'''INSERT INTO {table_name} VALUES(?,{' ?,'*(len(self.categories)-2)} ?)'''
         
         print(insert_comand)
         
-        self.__cursor.execute(insert_comand,args)
+        self.__cursor.execute(insert_comand, [x for x in list(self.categories.values())])
         
         self.__connect.commit()
         
     #взятие. Словарь типа {'столбец':'значение'}
-    def get (self,args:dict):
+    def get (self,name:str,args:dict):
         if not isinstance(args,dict):
             raise Exception("Нужен словарь")
         
-        get_command=f'''select * from {self.name.strip('.bd')} where'''
+        if name=="":
+            name=self.name.strip('.bd')
+        name=name.replace(" ","_")
+
+        get_command=f'''select * from {name} where'''
         
         #ключи условий
         args_keys=list(args.keys())
@@ -185,3 +203,17 @@ class data_base:
 
 
 
+        
+A=data_base("messeges.db")
+A.start()
+
+A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
+
+A.insert('third',{'id':'1','name':'Some_words_to_tell_two'})
+A.insert('third',{'id':'2','name':'Speak'})
+A.insert('third',{'id':'3','name':'Voice'})
+
+
+print(A.get('third',{'id':2}))
+
+A.stop()
