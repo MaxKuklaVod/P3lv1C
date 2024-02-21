@@ -51,7 +51,6 @@ def STT(path_to_file: str) -> str:
     # вывод
     try:
         ret = rec.recognize_google(audio, language="ru-RU")
-        print(ret)
         return ret
     except sr.UnknownValueError:
         print("Google Speech Recognition could not understand audio")
@@ -67,20 +66,14 @@ def STT(path_to_file: str) -> str:
 #Пунктуация. Принимает текст str
 def Punct(text):
     #апи
-    response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": "Bearer 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"}, json={"inputs":text,"wait_for_model":True,})
+    response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": "Bearer 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"}, json={"inputs":text,})
 
     #Ответ
     output=response.json()
     
     #вывод
     try:
-        #print(output[0]["generated_text"])
         return output[0]["generated_text"].replace(r"\n ",'\n')
     except KeyError:
         print(output)
         return Punct(text)
-
-        
-    
-#Пример
-print(Punct('text for punctuation"))

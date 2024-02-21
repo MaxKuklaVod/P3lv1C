@@ -35,7 +35,7 @@ def classes(mail, password_text):
 
     time.sleep(2)
 
-    check_auth_element = driver.find_element(By.XPATH,"/html/body/div/div[3]/div[2]/div[1]/ng-view/div/div/div/div[1]/div/div[1]/div")
+    #check_auth_element = driver.find_element(By.XPATH,"/html/body/div/div[3]/div[2]/div[1]/ng-view/div/div/div/div[1]/div/div[1]/div")
 
     # Переходим на вкладку с расписанием
     driver.get("https://bki.forlabs.ru/app/schedule")
