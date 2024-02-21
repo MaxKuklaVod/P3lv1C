@@ -2,7 +2,6 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT, Punct
-
 # from Schedule import classes
 import json
 from aiogram.filters.command import Command
