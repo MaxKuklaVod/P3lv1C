@@ -1,19 +1,18 @@
-from aiogram import Bot, Dispatcher, F, types
+from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
-from STT import STT_whisper
-from sorted import Sorting
-from TokenBot import token_bot
+from STT import STT_whisper, STT
+import json
 from aiogram.filters.command import Command
-import soundfile as sf
-import numpy as np
-import speech_recognition as sr
-from os import path
-from pathlib import Path
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+
+with open("tokens.json") as complex_data:
+    data = complex_data.read()
+    tokens = json.loads(data)
+
+main_token = tokens["main_token"]
 
 help_command = """
 Отправьте голосовое сообщение и я отправлю вам текст из него🤯
@@ -28,7 +27,7 @@ start_command = """
 /help - команда для получения списка команд
 """
 discription_command = """
-Бот умеет писать текст из аудио сообщений🤯.
+Бот умеет писать текст из аудио сообщений🤯. Также позволяет сохранять нужные сообщения по категориям.
 Создатели:
 @maxkuklavod🙃
 @Albert_Nosachenko🤐
@@ -44,9 +43,13 @@ categories_message = """
 """
 
 # Создание бота
-bot = Bot(token=token_bot)
+bot = Bot(token=main_token)
 dp = Dispatcher()
 
+# Создание глобальных переменных
+sort = []
+categories = ["Другое"]
+action = ''
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
 @dp.message(Command("start"))
@@ -54,7 +57,7 @@ async def main(message):
     await message.answer(start_command)
 
 
-# Команда /help, которая работает как команда /start
+# Команда /help, которая отправляет список команд
 @dp.message(Command("help"))
 async def main(message):
     await message.answer(help_command)
@@ -66,13 +69,7 @@ async def main(message):
     await message.answer(discription_command)
 
 
-# Команда сортировки по категориям
-sort = Sorting()
-slova = []
-name = []
-categories = []
-
-
+# Команда для сохранения сообщения
 @dp.message(Command("save"))
 async def main(message, command):
     # Если не переданы никакие аргументы, то
@@ -91,73 +88,53 @@ async def main(message, command):
         )
         return
     global sort, categories
-    sort.slovar("Другое", name, str(message.message_id), str(message.chat.id))
+    sort.append({"Категория": categories[0], "Имя": name, "Chat_id": str(message.chat.id), "Message_id": str(message.message_id)})
     await message.reply("Ваше сообщение сохранено")
 
 
-# Вывод сообщения по категориям, работает отлично
+# Вывод сообщения по категориям
 @dp.message(Command("savedfiles"))
 async def main(message):
-    global sort, slova
+    global categories
 
     # Инициализируем клавиатуру
     builder = InlineKeyboardBuilder()
 
-    sort.keyses(slova)
-    slova = list(set(slova))
-
-    for i in range(len(slova)):
-        builder.add(InlineKeyboardButton(text=slova[i], callback_data="num_" + str(i)))
+    builder.add(*[InlineKeyboardButton(text = item, callback_data = "num_" + item) for item in categories])
 
     # Указываем клавиатуру в ответе
     builder.adjust(3)
     await message.answer(savedfiles_command, reply_markup=builder.as_markup())
 
 
-# Работает отлично, показывает наименование сохраненок
+# Вывод сохраненных названий
 @dp.callback_query(F.data.startswith("num_"))
 async def callback(callback):
-    global sort, slova, name
+    global sort, action
 
     action = callback.data.split("_")[1]
     builder = InlineKeyboardBuilder()
 
-    slova = list(set(slova))
+    category = filter(lambda x: x['Категория'] == action, sort)
+    builder.add(*[InlineKeyboardButton(text = item["Имя"], callback_data="numm_" + item["Имя"]) for item in category])
 
-    for i in range(len(slova)):
-        if action == str(i):
-            sort.valueses(name, slova[i])
-            name = list(set(name))
-            for j in range(len(name)):
-                builder.add(
-                    InlineKeyboardButton(
-                        text=name[j], callback_data="numm_" + str(j) + str(j)
-                    )
-                )
     builder.adjust(3)
     await callback.message.answer(categories_message, reply_markup=builder.as_markup())
 
 
-# Работает отлично, возвращает сохраненное ранее сообщение
+# Возвращает сохраненное ранее сообщение, по выбранному названию
 @dp.callback_query(F.data.startswith("numm_"))
 async def callback(callback):
-    global sort, slova, name
+    global sort, action
 
-    slova = list(set(slova))
-    name = list(set(name))
+    name = callback.data.split("_")[1]
 
-    action = callback.data.split("_")[1]
+    category = filter(lambda x: x['Категория'] == action, sort)
+    category = filter(lambda x: x['Имя'] == name, category)
 
-    for i in range(len(slova)):
-        sort.valueses(name, slova[i])
-        for j in range(len(name)):
-            if action == str(i) * 2:
-                chatid = sort.dict[slova[i]][name[j]]["chat"]
-                message_id = sort.dict[slova[i]][name[j]]["message"]
-            else:
-                continue
-    await bot.send_message(
-        chat_id=chatid, text="Вот ваше сообщение", reply_to_message_id=message_id
+    for item in category:
+        await bot.send_message(
+        chat_id = item['Chat_id'], text="Вот ваше сообщение", reply_to_message_id = item["Message_id"]
     )
 
 
@@ -169,7 +146,7 @@ async def audio(message):
     await bot.download_file(file_id.file_path, "audio.ogg")
 
     # Speech-to-Text convertation
-    text = STT_whisper("audio.ogg")
+    text = STT("audio.ogg")
 
     await message.reply(text)
 
