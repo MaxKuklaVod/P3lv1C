@@ -196,7 +196,39 @@ class data_base:
             return row
 
         
+    #вывод всех значений
+    def get_raw (self,name:str,args:dict):
+        if not isinstance(args,dict):
+            raise Exception("Нужен словарь")
+        
+        if name=="":
+            name=self.name.strip('.bd')
+        name=name.replace(" ","_")
+
+        get_command=f'''select * from {name} where'''
+        
+        #ключи условий
+        args_keys=list(args.keys())
+        #args_args=list(args.items())
+        
+        for key in args_keys:
+            #проверка на ошибку
+            get_command+=f' {key} = "{args[key]}" and'
+                
+        get_command=get_command[:-4]
+        print(get_command)
+        self.__cursor.execute(get_command)
+        
+        records=self.__cursor.fetchall()
+        
+        ret=[]
+
+        for row in records:
+            ret.append( row)
             
+        return ret
+
+
         
    
 
