@@ -2,6 +2,8 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT, Punct
+from messege_bd import data_base as db
+
 # from Schedule import classes
 import json
 from aiogram.filters.command import Command
@@ -58,23 +60,30 @@ everytenmin = """я получается в первый раз когда ис�
 открыл вроде бы ставить запятые"""
 
 
-def punctuation():
-    _ = Punct(everytenmin)
-    print(_)
-    Timer(600, punctuation).start()
-
-
-punctuation()
-
 # Создание бота
 bot = Bot(token=main_token)
 dp = Dispatcher()
 
 # Создание глобальных переменных
 sort = []
-categories = ["Другое"]
+categories = []
 action = ""
 Admin_ID = 0
+bd = db("P3lv1c_bone.db")
+bd.start()
+bd.create(
+    "saves",
+    {
+        "mes_id": "text",
+        "chat_id": "text",
+        "id_category": "integer",
+        "name": "text",
+    },
+)
+for i in range(1, 8):
+    categories.append(bd.get("categories", {"id": i})[1])
+
+bd.stop()
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
@@ -122,136 +131,127 @@ async def main(message, command):
             "/save <Категория> <Название>"
         )
         return
-    global sort, categories
+    global categories, id_category
+    category=category.lower()
+    bd.start()
     if category not in categories:
-        sort.append(
-            {
-                "Категория": "Другое",
-                "Имя": name,
-                "Chat_id": str(message.chat.id),
-                "Message_id": str(message.message_id),
-            }
-        )
+        id_category = bd.get('categories',{'name':"другое"})[0]
+        bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
         await message.reply(
             f"Так как еще нет категории <{category}> Ваше сообщение сохранено, в категорию: <Другое>"
         )
     else:
-        sort.append(
-            {
-                "Категория": categories,
-                "Имя": name,
-                "Chat_id": str(message.chat.id),
-                "Message_id": str(message.message_id),
-            }
-        )
+        id_category = bd.get('categories',{'name':category})[0]
+        bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
         await message.reply("Ваше сообщение сохранено")
+    bd.stop()
 
 
-# Команда для удаления сохраненных сообщений, доступнатолько админу
-@dp.message(Command("deletesavedfiles"))
-async def main(message):
-    truefalse = True
-    member = await bot.get_chat_member(message.chat.id, message.from_user.id)
-    for x in member:
-        if "member" in x:
-            truefalse = False
-        break
-    if truefalse == False:
-        await message.answer("Вы не обладаете правами администратора")
-    else:
-        global categories, Admin_ID
+# # Команда для удаления сохраненных сообщений, доступнатолько админу
+# @dp.message(Command("deletesavedfiles"))
+# async def main(message):
+#     truefalse = True
+#     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+#     for x in member:
+#         if "member" in x:
+#             truefalse = False
+#         break
+#     if truefalse == False:
+#         await message.answer("Вы не обладаете правами администратора")
+#     else:
+#         global categories, Admin_ID
 
-        Admin_ID = message.from_user.id
+#         Admin_ID = message.from_user.id
 
-        # Инициализируем клавиатуру
-        builder = InlineKeyboardBuilder()
+#         # Инициализируем клавиатуру
+#         builder = InlineKeyboardBuilder()
 
-        builder.add(
-            *[
-                InlineKeyboardButton(text=item, callback_data="del_" + item)
-                for item in categories
-            ]
-        )
+#         builder.add(
+#             *[
+#                 InlineKeyboardButton(text=item, callback_data="del_" + item)
+#                 for item in categories
+#             ]
+#         )
 
-        # Указываем клавиатуру в ответе
-        builder.adjust(3)
-        await message.answer(deletesavedfiles_command, reply_markup=builder.as_markup())
-
-
-# Вывод сохраненных названий для удаления
-@dp.callback_query(F.data.startswith("del_"))
-async def callback(callback):
-    global sort, action, Admin_ID
-    if callback.from_user.id == Admin_ID:
-        action = callback.data.split("_")[1]
-        builder = InlineKeyboardBuilder()
-
-        category = filter(lambda x: x["Категория"] == action, sort)
-        builder.add(
-            *[
-                InlineKeyboardButton(
-                    text=item["Имя"], callback_data="delet_" + item["Message_id"]
-                )
-                for item in category
-            ]
-        )
-
-        builder.adjust(3)
-        await callback.message.answer(
-            deletecategories_message, reply_markup=builder.as_markup()
-        )
+#         # Указываем клавиатуру в ответе
+#         builder.adjust(3)
+#         await message.answer(deletesavedfiles_command, reply_markup=builder.as_markup())
 
 
-# Удаление сохраненного ранее сообщения
-@dp.callback_query(F.data.startswith("delet_"))
-async def callback(callback):
-    global sort, Admin_ID
+# # Вывод сохраненных названий для удаления
+# @dp.callback_query(F.data.startswith("del_"))
+# async def callback(callback):
+#     global sort, action, Admin_ID
+#     if callback.from_user.id == Admin_ID:
+#         action = callback.data.split("_")[1]
+#         builder = InlineKeyboardBuilder()
 
-    if callback.from_user.id == Admin_ID:
-        message = callback.data.split("_")[1]
+#         category = filter(lambda x: x["Категория"] == action, sort)
+#         builder.add(
+#             *[
+#                 InlineKeyboardButton(
+#                     text=item["Имя"], callback_data="delet_" + item["Message_id"]
+#                 )
+#                 for item in category
+#             ]
+#         )
 
-        category = filter(lambda x: x["Message_id"] == message, sort)
+#         builder.adjust(3)
+#         await callback.message.answer(
+#             deletecategories_message, reply_markup=builder.as_markup()
+#         )
 
-        for item in category:
-            sort.remove(item)
-        await callback.message.answer("Сохранённое сообщение удалено")
+
+# # Удаление сохраненного ранее сообщения
+# @dp.callback_query(F.data.startswith("delet_"))
+# async def callback(callback):
+#     global sort, Admin_ID
+
+#     if callback.from_user.id == Admin_ID:
+#         message = callback.data.split("_")[1]
+
+#         category = filter(lambda x: x["Message_id"] == message, sort)
+
+#         for item in category:
+#             sort.remove(item)
+#         await callback.message.answer("Сохранённое сообщение удалено")
 
 
 # Вывод сообщения по категориям
 @dp.message(Command("savedfiles"))
 async def main(message):
-    global categories
-
+    global categories, chat_id
+    chat_id = message.chat.id
     # Инициализируем клавиатуру
     builder = InlineKeyboardBuilder()
-
     builder.add(
         *[
-            InlineKeyboardButton(text=item, callback_data="num_" + item)
-            for item in categories
+            InlineKeyboardButton(text=item.capitalize(), callback_data="num_" + f'{num}')
+            for num, item in enumerate(categories)
         ]
     )
 
     # Указываем клавиатуру в ответе
-    builder.adjust(3)
+    builder.adjust(1)
     await message.answer(savedfiles_command, reply_markup=builder.as_markup())
 
 
 # Вывод сохраненных названий
 @dp.callback_query(F.data.startswith("num_"))
 async def callback(callback):
-    global sort, action
-
-    action = callback.data.split("_")[1]
+    global action, chat_id
+    bd.start()
+    action = int(callback.data.split('_')[1])+1
     builder = InlineKeyboardBuilder()
 
-    category = filter(lambda x: x["Категория"] == action, sort)
+    names = bd.get_raw('saves',{"id_category": action, 'chat_id': chat_id})
+    bd.stop()
     builder.add(
         *[
             InlineKeyboardButton(
-                text=item["Имя"], callback_data="numm_" + item["Message_id"]
+                text=item[3], callback_data="numm_" + item[0]
             )
-            for item in category
+            for item in names
         ]
     )
 
@@ -262,18 +262,22 @@ async def callback(callback):
 # Возвращает сохраненное ранее сообщение, по выбранному названию
 @dp.callback_query(F.data.startswith("numm_"))
 async def callback(callback):
-    global sort
-
+    global chat_id
     message = callback.data.split("_")[1]
-
-    category = filter(lambda x: x["Message_id"] == message, sort)
-
-    for item in category:
-        await bot.send_message(
-            chat_id=item["Chat_id"],
+    await bot.send_message(
+            chat_id=chat_id,
             text="Вот ваше сообщение",
-            reply_to_message_id=item["Message_id"],
+            reply_to_message_id=message,
         )
+
+
+def punctuation():
+    _ = Punct(everytenmin)
+    print(_)
+    Timer(600, punctuation).start()
+
+
+punctuation()
 
 
 # Перевод из аудио в текст (STT)
