@@ -184,8 +184,7 @@ class data_base:
         
         for key in args_keys:
             #проверка на ошибку
-            if key in self.__keys:
-                get_command+=f' {key} = "{args[key]}" and'
+            get_command+=f' {key} = "{args[key]}" and'
                 
         get_command=get_command[:-4]
         print(get_command)
@@ -195,6 +194,39 @@ class data_base:
 
         for row in records:
             return row
+        
+
+    #вывод всех значений
+    def get_raw (self,name:str,args:dict):
+        if not isinstance(args,dict):
+            raise Exception("Нужен словарь")
+        
+        if name=="":
+            name=self.name.strip('.bd')
+        name=name.replace(" ","_")
+
+        get_command=f'''select * from {name} where'''
+        
+        #ключи условий
+        args_keys=list(args.keys())
+        #args_args=list(args.items())
+        
+        for key in args_keys:
+            #проверка на ошибку
+            get_command+=f' {key} = "{args[key]}" and'
+                
+        get_command=get_command[:-4]
+        print(get_command)
+        self.__cursor.execute(get_command)
+        
+        records=self.__cursor.fetchall()
+        
+        ret=[]
+
+        for row in records:
+            ret.append( row)
+            
+        return ret
 
         
             
@@ -204,16 +236,16 @@ class data_base:
 
 
         
-A=data_base("messeges.db")
-A.start()
+# A=data_base("messeges.db")
+# A.start()
 
-A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
-
-A.insert('third',{'id':'1','name':'Some_words_to_tell_two'})
-A.insert('third',{'id':'2','name':'Speak'})
-A.insert('third',{'id':'3','name':'Voice'})
+# #ID,ID сообщения, ID беседы, ID категории, название
 
 
-print(A.get('third',{'id':2}))
+# #A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
 
-A.stop()
+# # for i in range(4,10):
+# #     A.insert('third',{'id':i,'name':'bruh'})
+# print(A.get_raw('third',{'name':f'bruh'}))
+
+# A.stop()
