@@ -235,8 +235,8 @@ class data_base:
 
 
         
-A=data_base("messeges.db")
-A.start()
+# A=data_base("messeges.db")
+# A.start()
 
 # #ID,ID сообщения, ID беседы, ID категории, название
 

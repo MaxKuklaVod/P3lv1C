@@ -16,6 +16,7 @@ with open("tokens.json") as complex_data:
     tokens = json.loads(data)
 # Сам токен
 STT_token = tokens["STT_token"]
+Punct_token=tokens["Punct_token"]
 
 
 # whisper
@@ -66,7 +67,7 @@ def STT(path_to_file: str) -> str:
 #Пунктуация. Принимает текст str
 def Punct(text):
     #апи
-    response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": "Bearer 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"}, json={"inputs":text,})
+    response = requests.post("https://api-inference.huggingface.co/models/1-800-BAD-CODE/xlm-roberta_punctuation_fullstop_truecase", headers= {"Authorization": f"Bearer {Punct_token}"}, json={"inputs":text,})
 
     #Ответ
     output=response.json()
