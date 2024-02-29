@@ -108,7 +108,7 @@ async def check_schedule(chat_id):
     while True:
         job_result = await classes(mail_text, password_text)
         if job_result is not None:
-            Bot.send_message(chat_id, job_result)
+            await Bot.send_message(chat_id=chat_id, text=job_result)
         await asyncio.sleep(5400)  # Таймер на 1.5 часа
 
 
