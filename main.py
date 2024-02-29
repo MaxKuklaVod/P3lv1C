@@ -22,7 +22,7 @@ help_command = """
 Список команд:
 /help - команда, показывающая список команд
 /discription - команда, показывающая описание бота
-/save <Категория> <Название> - команда для сохранения картинок/фотографий по категориям
+/save <имя_категории> <Название> - команда для сохранения картинок/фотографий по категориям
 /savedfiles - команда, с помощью которой вы можете обратиться к сохраненным сообщениям
 /deletesavedfiles - команда для удаления сохранённых сообщений, доступна только админам
 """
@@ -128,7 +128,7 @@ async def main(message, command):
     except ValueError:
         await message.answer(
             "Ошибка: неправильный формат команды. Пример:\n"
-            "/save <Категория> <Название>"
+            "/save <имя_категории> <Название>"
         )
         return
     global categories, id_category
@@ -141,7 +141,7 @@ async def main(message, command):
             f"Так как еще нет категории <{category}> Ваше сообщение сохранено, в категорию: <Другое>"
         )
     else:
-        id_category = bd.get('categories',{'name':category})[0]
+        id_category = bd.get('categories',{'name':category.replace("_"," ")})[0]
         bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
         await message.reply("Ваше сообщение сохранено")
     bd.stop()
