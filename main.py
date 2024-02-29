@@ -141,7 +141,7 @@ async def main(message, command):
             f"Так как еще нет категории <{category}> Ваше сообщение сохранено, в категорию: <Другое>"
         )
     else:
-        id_category = bd.get('categories',{'name':category})[0]
+        id_category = bd.get('categories',{'name':category.replace("_"," ")})[0]
         bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
         await message.reply("Ваше сообщение сохранено")
     bd.stop()
