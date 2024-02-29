@@ -1,0 +1,7 @@
+numpy
+requests
+aiogram
+selenium
+pytz
+soundfile
+SpeechRecognition
