@@ -1,104 +1,159 @@
-from selenium import webdriver
-import datetime
 import pytz
 import json
+import asyncio
+import datetime
+from aiogram import Bot
+from selenium import webdriver
 from selenium.webdriver.common.by import By
-import time
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support import expected_conditions as EC
 
-# need_to_inst
-# selenium
-# pytz
+# Код для запуска функции, повторяющей вызов расписания
+"""
+scheduler = AsyncIOScheduler()
+scheduler.add_job(check_schedule, 'cron', hour='6-18', minute='30', second='0')
+scheduler.start()
 
-# Данные для входа
+asyncio.get_event_loop().run_forever()
+"""
+
+# Библиотеки, требующие установки
+"""
+selenium
+apscheduler
+"""
+
+
+# Импорт данных для входа
 log_info = json.load(open('login_info.json'))
 
-mail = log_info['mail']
+mail_text = log_info['mail']
 password_text = log_info['password']
 
 
-# Запись расписания в переменную
-def classes(mail, password_text):
-    # Драйвер для взаимодействия с браузером
-    driver = webdriver.Firefox()
+async def classes(mail_arg, password_arg):
+    # Запуск браузера
+    opt = Options()
+    opt.add_argument("--headless")
+    driver = webdriver.Firefox(options=opt)
     driver.get("https://bki.forlabs.ru/app/login")
 
-    # Процесс входа в систему Forlabs
-    login = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")
-    login.send_keys(mail)
+    # Ожидание элементов авторизации
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+        (By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")))
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+        (By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")))
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")))
 
-    password = driver.find_element(By.XPATH,"/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")
-    password.send_keys(password_text)
+    # Ввод логина и пароля, вход в аккаунт
+    login = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")
+    login.send_keys(mail_arg)
+
+    password = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")
+    password.send_keys(password_arg)
 
     login_button = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")
     login_button.click()
 
-    time.sleep(2)
+    await asyncio.sleep(1)
 
-    #check_auth_element = driver.find_element(By.XPATH,"/html/body/div/div[3]/div[2]/div[1]/ng-view/div/div/div/div[1]/div/div[1]/div")
-
-    # Переходим на вкладку с расписанием
+    # Переход на страницу с расписанием
     driver.get("https://bki.forlabs.ru/app/schedule")
-    time.sleep(2)
 
-    # День недели
     current_day = datetime.datetime.today().weekday()
-
-    # Создание словаря для хранения информации о парах
-    # schedule - расписание
     schedule = {}
 
-    # Заполнение словаря
+    await asyncio.sleep(2)
+
+
+    # Заполнение словаря с парами
     for line_number in range(1, 8):
-        # Вывод в воскресенье
         if current_day == 6:
             driver.close()
-            return ["Сегодня пар нет", schedule]
 
-        # Проходка по блокам, содержащим время начала занятия и название дисциплины
+        # Поиск названия, времени и места проведения пары
         try:
-            lesson_time = driver.find_element(By.XPATH,f'/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div/div/div[2]/div[{(line_number * 7) + current_day + 2}]/ul/li/span[1]')
-            lesson_name = driver.find_element(By.XPATH,f'/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div/div/div[2]/div[{(line_number * 7) + current_day + 2}]/ul/li/span[2]/span/a')
+            lesson_time = driver.find_element(By.XPATH,
+                                              f'/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div/div/div[2]/div[{(line_number * 7) + current_day + 2}]/ul/li/span[1]')
+            lesson_name = driver.find_element(By.XPATH,
+                                              f'/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div/div/div[2]/div[{(line_number * 7) + current_day + 2}]/ul/li/span[2]/span/a')
+            lesson_place = driver.find_element(By.XPATH,
+                                               f'/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div/div/div[2]/div[{(line_number * 7) + current_day + 2}]/ul/li[1]/span[5]')
 
-            schedule[lesson_time.get_attribute('innerHTML')[0:5]] = lesson_name.get_attribute('innerHTML')
+            schedule[lesson_time.get_attribute('innerHTML')[0:5]] = [lesson_name.get_attribute('innerHTML'),lesson_place.get_attribute('innerHTML')]
+
+        # Исключение, срабатывающее при ненахождении элемента
         except NoSuchElementException:
             pass
 
     driver.close()
 
-    # Время для вычисления следующей пары
     time_zone = pytz.timezone("Asia/Irkutsk")
     current_time = datetime.datetime.now(time_zone).strftime('%H:%M')
 
+    # Возвращение сообщения
     for lesson_time in schedule.keys():
         if current_time < lesson_time:
-            result = (f"Следующая пара: {schedule[lesson_time]}, начинается в {lesson_time}")
-            return [result, schedule.keys()]
+            result = f"Следующая пара: {schedule[lesson_time][0]}, начинается в {lesson_time} в {schedule[lesson_time][1]}"
+            return result
         else:
             pass
-    return ["Дальше пар не будет", schedule]
 
 
-# Функция для повторения отправки сообщения(Ещё не завершена, продумываются другие варианты)
-def repeater(func, mail, password):
-    res = func(mail, password)
-    print(res[0])
-    time_zone = pytz.timezone("Asia/Irkutsk")
-
-    starts = ["06:20"]
-    starts += res[1]
-
-    for index in enumerate(starts):
-        starts[index[0]] = datetime.datetime.strptime(starts[index[0]], "%H:%M").time()
-        starts[index[0]] = str(datetime.timedelta(hours=starts[index[0]].hour, minutes=starts[index[0]].minute) - datetime.timedelta(
-            minutes=20)).replace(":", "")
-        if len(starts[index[0]]) < 6:
-            starts[index[0]] = "0" + starts[index[0]]
-
+async def check_schedule(mail_arg,password_arg,chat_id):
     while True:
-        current_time = str(datetime.datetime.now(time_zone).strftime("%H:%M:%S")).replace(":", "")
-        if current_time in starts:
-            repeater(func, mail, password)
+        job_result = await classes(mail_arg, password_arg)
+        if job_result is not None:
+            await Bot.send_message(chat_id=chat_id, text=job_result)
+        await asyncio.sleep(5400)  # Таймер на 1.5 часа
 
 
-repeater(classes,mail,password_text)
+# Функция для получения списка предметов в семестре
+async def list_of_classes(mail_arg, password_arg):
+    # Создание массива для хранения названий предметов
+    classes_list = []
+
+    # Запуск браузера
+    opt = Options()
+    opt.add_argument("--headless")
+    driver = webdriver.Firefox()
+    driver.get("https://bki.forlabs.ru/app/login")
+
+    # Ожидание элементов авторизации
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+        (By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")))
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located(
+        (By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")))
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")))
+
+    # Ввод логина и пароля, вход в аккаунт
+    login = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")
+    login.send_keys(mail_arg)
+
+    password = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")
+    password.send_keys(password_arg)
+
+    login_button = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")
+    login_button.click()
+
+    await asyncio.sleep(1)
+
+    # Переход на вкладку со списком предметов
+    driver.get("https://bki.forlabs.ru/app/learning/187/studies")
+
+    await asyncio.sleep(2)
+
+    # Заполнение массива с названиями предметов
+    for line in range(1,20):
+
+        try:
+            subject = driver.find_element(By.XPATH, f"/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div[2]/div[2]/div/div/table/tbody/tr[{line}]/td[1]/a")
+            classes_list.append(subject.get_attribute("innerHTML"))
+        except NoSuchElementException:
+            driver.close()
+            return classes_list
