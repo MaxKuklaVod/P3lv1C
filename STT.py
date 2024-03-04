@@ -1,9 +1,9 @@
 import soundfile as sf
 import requests
 import speech_recognition as sr
-from os import path
+import os
 import json
-
+from pathlib import Path
 # need
 # google-cloud-speech
 # soundfile
@@ -38,7 +38,7 @@ def STT(path_to_file: str) -> str:
     sf.write(out, data, samplerate)
 
     # адресс временного файла
-    adress = path.join(path.dirname(path.realpath(__file__)), out)
+    adress = os.path.join(Path(__file__).parent, out)
 
     # узнаватель текст
     rec = sr.Recognizer()
