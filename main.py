@@ -132,7 +132,7 @@ async def main(message, command):
         return
     global categories, id_category
     category=category.lower()
-    bd.start()
+
     if category not in categories:
         id_category = bd.get('categories',{'name':"другое"})[0]
         bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
@@ -239,7 +239,7 @@ async def main(message):
 @dp.callback_query(F.data.startswith("num_"))
 async def callback(callback):
     global action, chat_id
-    bd.start()
+
     action = int(callback.data.split('_')[1])+1
     builder = InlineKeyboardBuilder()
 
