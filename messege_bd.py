@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 
-class data_base:
+class manager:
     #имя, ключи
     __name="intituled"
     __keys=[]
@@ -260,7 +260,7 @@ class data_base:
 
 
         
-# A=data_base("messeges.db")
+# A=manager("messeges.db")
 # A.start()
 
 # #ID,ID сообщения, ID беседы, ID категории, название

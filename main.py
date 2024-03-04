@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT, Punct
-from messege_bd import data_base as db
+from messege_bd import manager 
 
 # from Schedule import classes
 import json
@@ -69,7 +69,7 @@ sort = []
 categories = []
 action = ""
 Admin_ID = 0
-bd = db("P3lv1c_bone.db")
+bd = manager("P3lv1c_bone.db")
 bd.start()
 bd.create(
     "saves",
@@ -83,7 +83,6 @@ bd.create(
 for i in range(1, 8):
     categories.append(bd.get("categories", {"id": i})[1])
 
-bd.stop()
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
@@ -144,7 +143,7 @@ async def main(message, command):
         id_category = bd.get('categories',{'name':category.replace("_"," ")})[0]
         bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
         await message.reply("Ваше сообщение сохранено")
-    bd.stop()
+
 
 
 # # Команда для удаления сохраненных сообщений, доступнатолько админу
@@ -245,7 +244,7 @@ async def callback(callback):
     builder = InlineKeyboardBuilder()
 
     names = bd.get_raw('saves',{"id_category": action, 'chat_id': chat_id})
-    bd.stop()
+
     builder.add(
         *[
             InlineKeyboardButton(
