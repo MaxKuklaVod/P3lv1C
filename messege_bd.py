@@ -228,6 +228,7 @@ class data_base:
             
         return ret
     
+        
     #удаление
     def delete(self,name:str,args:dict):
         
@@ -254,6 +255,7 @@ class data_base:
 
         
    
+
 
 
 
