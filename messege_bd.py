@@ -227,6 +227,29 @@ class data_base:
             ret.append( row)
             
         return ret
+    
+    #удаление
+    def delete(self,name:str,args:dict):
+        
+        if not isinstance(args,dict):
+            raise Exception("Нужен словарь")
+        
+        if name=="":
+            name=self.name.strip('.bd')
+        name=name.replace(" ","_")
+        
+        delete_command=f'''DELETE FROM {name} where'''
+        
+        #ключи условий
+        args_keys=list(args.keys())
+        
+        for key in args_keys:
+            #проверка на ошибку
+            delete_command+=f' {key} = ? and'
+                
+        delete_command=delete_command[:-4]
+        print(delete_command)
+        self.__cursor.execute(delete_command, [x for x in list(args.values())])
 
 
         
