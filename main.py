@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT, Punct
-from messege_bd import manager 
+from messege_bd import db_manager 
 
 # from Schedule import classes
 import json
@@ -69,7 +69,7 @@ sort = []
 categories = []
 action = ""
 Admin_ID = 0
-bd = manager("P3lv1c_bone.db")
+bd = db_manager("P3lv1c_bone.db")
 bd.start()
 bd.create(
     "saves",
@@ -310,4 +310,7 @@ async def Hello(message):
 
 # Функция, которая запускает программу в боте
 if __name__ == "__main__":
-    asyncio.run(dp.start_polling(bot))
+    try:
+        asyncio.run(dp.start_polling(bot))
+    except:
+        bd.stop()

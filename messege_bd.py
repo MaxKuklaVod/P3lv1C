@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 
-class manager:
+class db_manager:
     #имя, ключи
     __name="intituled"
     __keys=[]
@@ -258,18 +258,18 @@ class manager:
 
 
 
+if __name__=="__main__":
+            
+    A=db_manager("messeges.db")
+    A.start()
 
-        
-# A=manager("messeges.db")
-# A.start()
-
-# #ID,ID сообщения, ID беседы, ID категории, название
+    #ID,ID сообщения, ID беседы, ID категории, название
 
 
-# #A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
+    #A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
 
-# # for i in range(4,10):
-# #     A.insert('third',{'id':i,'name':'bruh'})
-# print(A.get_raw('third',{'name':f'bruh'}))
+    # for i in range(4,10):
+    #     A.insert('third',{'id':i,'name':'bruh'})
+    print(A.get_raw('third',{'name':f'bruh'}))
 
-# A.stop()
+    A.stop()
