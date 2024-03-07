@@ -266,10 +266,10 @@ if __name__=="__main__":
     #ID,ID сообщения, ID беседы, ID категории, название
 
 
-    #A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
+    A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
 
-    # for i in range(4,10):
-    #     A.insert('third',{'id':i,'name':'bruh'})
+    for i in range(4,10):
+        A.insert('third',{'id':i,'name':'bruh'})
     print(A.get_raw('third',{'name':f'bruh'}))
 
     A.stop()
