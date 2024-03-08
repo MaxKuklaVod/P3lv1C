@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 
 
-class data_base:
+class db_manager:
     #имя, ключи
     __name="intituled"
     __keys=[]
@@ -227,6 +227,30 @@ class data_base:
             ret.append( row)
             
         return ret
+    
+        
+    #удаление
+    def delete(self,name:str,args:dict):
+        
+        if not isinstance(args,dict):
+            raise Exception("Нужен словарь")
+        
+        if name=="":
+            name=self.name.strip('.bd')
+        name=name.replace(" ","_")
+        
+        delete_command=f'''DELETE FROM {name} where'''
+        
+        #ключи условий
+        args_keys=list(args.keys())
+        
+        for key in args_keys:
+            #проверка на ошибку
+            delete_command+=f' {key} = ? and'
+                
+        delete_command=delete_command[:-4]
+        print(delete_command)
+        self.__cursor.execute(delete_command, [x for x in list(args.values())])
 
 
         
@@ -234,17 +258,18 @@ class data_base:
 
 
 
-        
-# A=data_base("messeges.db")
-# A.start()
+if __name__=="__main__":
+            
+    A=db_manager("messeges.db")
+    A.start()
 
-# #ID,ID сообщения, ID беседы, ID категории, название
+    #ID,ID сообщения, ID беседы, ID категории, название
 
 
-# #A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
+    A.create('third',{'id':'integer PRIMARY KEY','name':'text'})
 
-# # for i in range(4,10):
-# #     A.insert('third',{'id':i,'name':'bruh'})
-# print(A.get_raw('third',{'name':f'bruh'}))
+    for i in range(4,10):
+        A.insert('third',{'id':i,'name':'bruh'})
+    print(A.get_raw('third',{'name':f'bruh'}))
 
-# A.stop()
+    A.stop()
