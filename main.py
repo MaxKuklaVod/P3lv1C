@@ -13,7 +13,7 @@ with open("tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["test_token"]
+main_token = tokens["main_token"]
 
 with open("textconst.json", encoding="utf-8") as complex_data:
     data = complex_data.read()
