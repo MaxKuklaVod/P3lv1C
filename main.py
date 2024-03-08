@@ -91,6 +91,20 @@ async def main(message, command):
         return
     global categories, id_category
     category = category.lower()
+    # мега костыль
+    if category == "информационные":
+        category = "информационные системы и технологии"
+        name = name[21:]
+    elif category == "компьютерное":
+        category = "компьютерное зрение"
+        name = name[7:]
+    elif category == "русский":
+        category = "русский язык"
+        name = name[5:]
+    elif category == "шаблоны":
+        category = "шаблоны проектирования"
+        name = name[15:]
+
     bd.start()
     if category not in categories:
         id_category = bd.get("categories", {"name": "другое"})[0]
