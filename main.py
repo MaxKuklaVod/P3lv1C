@@ -1,6 +1,7 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
+import random
 from STT import STT, Punct
 from messege_bd import data_base as db
 import json
@@ -238,8 +239,10 @@ async def Math(message):
     global members
     conclusion = ""
 
-    for member in members.values():
-        conclusion += member + "\n"
+    for i in range(len(members)):
+        random_member = random.choice(members.values())
+        conclusion += random_member + "\n"
+        members = {key: val for key, val in members.items() if val != random_member}
 
     await message.answer("Вот ваша очередь: \n" + conclusion)
 
