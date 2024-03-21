@@ -257,14 +257,34 @@ async def Math(message):
     if userid not in members.keys():
         members[userid] = member
 
-
-# Пасхалка с Игорем
-@dp.message(F.content_type == ContentType.TEXT)
-async def Hello(message):
-    if " и чё " in message.text.lower() or " и че " in message.text.lower():
+    if (
+        "и" in message.text.lower().split()
+        and "че" in message.text.lower().split()
+        or "чё" in message.text.lower().split()
+    ):
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAJtC2WhNs5jRDj39GBrG9LGAUFt0U8sAAIvKgACWTYQSgyguNjuPct4NAQ",
+        )
+
+    if "лебед" in message.text.lower() or "не растраивайся" in message.text.lower():
+        await bot.send_sticker(
+            message.chat.id,
+            sticker="CAACAgIAAxkBAAEEMrNl-9zOgfrh6GJz2n9EEy9c90jVOwACl1EAAvj6aEu3ZxRrYYnWIDQE",
+        )
+    if (
+        "пойдешь?" in message.text.lower()
+        or "пойдёшь?" in message.text.lower()
+        or "го?" in message.text.lower()
+    ):
+        await bot.send_sticker(
+            message.chat.id,
+            sticker="CAACAgIAAxkBAAEEMsVl-99H7tSaTw7pGicmX8U2MVAitQACZ0cAAsRFaEvviMV6epKAgzQE",
+        )
+    if "круто" in message.text.lower():
+        await bot.send_sticker(
+            message.chat.id,
+            sticker="CAACAgIAAxkBAAEEMsdl-9_GcjSK1rwFNntWiMRAepgcXwACgCUAAlWNCEpk32eI4XKYATQE",
         )
 
 
