@@ -34,6 +34,7 @@ dp = Dispatcher()
 # Создание глобальных переменных
 sort = []
 categories = []
+members = {}
 action = ""
 Admin_ID = 0
 bd = db("P3lv1c_bone.db")
@@ -218,6 +219,43 @@ async def audio(message):
     await bot.edit_message_text(
         chat_id=str(message.chat.id), message_id=str(msg.message_id), text=punctual
     )
+
+
+# Очередь для математики
+@dp.message(Command("stmath"))
+async def Math(message):
+    global members
+    members.clear()
+
+    await message.answer(
+        "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /edmath"
+    )
+
+
+# Вывод очереди
+@dp.message(Command("edmath"))
+async def Math(message):
+    global members
+    conclusion = ""
+
+    for member in members.values():
+        conclusion += member + "\n"
+
+    await message.answer("Вот ваша очередь: \n" + conclusion)
+
+
+# Создание списка людей в группе
+@dp.message(F.content_type == ContentType.TEXT)
+async def Math(message):
+    global members
+
+    firstname = message.from_user.first_name
+    username = message.from_user.username
+    userid = message.from_user.id
+    member = "@" + username + " - " + firstname
+
+    if userid not in members.keys():
+        members[userid] = member
 
 
 # Пасхалка с Игорем
