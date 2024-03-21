@@ -2,9 +2,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 from STT import STT, Punct
-from messege_bd import db_manager 
-
-# from Schedule import classes
+from messege_bd import data_base as db
 import json
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
@@ -17,47 +15,16 @@ with open("tokens.json") as complex_data:
 
 main_token = tokens["main_token"]
 
-help_command = """
-Отправьте голосовое сообщение и я отправлю вам текст из него🤯
-Список команд:
-/help - команда, показывающая список команд
-/discription - команда, показывающая описание бота
-/save <имя_категории> <Название> - команда для сохранения картинок/фотографий по категориям
-/savedfiles - команда, с помощью которой вы можете обратиться к сохраненным сообщениям
-/deletesavedfiles - команда для удаления сохранённых сообщений, доступна только админам
-"""
-start_command = """
-Привет!👋 Я бот🤖, который умеет обрабатывать аудио сообщения и присылать их в текстовом формате🤯. \n
-/help - команда для получения списка команд
-"""
-discription_command = """
-Бот умеет писать текст из аудио сообщений🤯. Также позволяет сохранять нужные сообщения по категориям.
-Создатели:
-@maxkuklavod🙃
-@Albert_Nosachenko🤐
-@yourocculticT20🧐
-Руководитель:
-@jezvGG💀
-"""
-savedfiles_command = """
-Выберете категорию сохранения, в которой хотите найти свои файлы.
-"""
-categories_message = """
-Выберете название сохранения, в котором хотите найти свои файлы.
-"""
-deletesavedfiles_command = """
-Выберете категорию, в которой хотите удалить сохраненные сообщения.
-"""
-deletecategories_message = """
-Выберете название сохранения, которое вы хотите удалить.
-"""
+with open("textconst.json", encoding="utf-8") as complex_data:
+    data = complex_data.read()
+    const = json.loads(data)
 
-
-# Цикл вызова функции раз в 10 минут
-everytenmin = """я получается в первый раз когда использовал это вот сообщение он мне хорошо написал 
-все запятые и расставил там потом вот произвести при обновил потому что он просто перестал отвечать 
-мне как будто бы первый раз по скорее всего кого-то тоже активирован наверное не знаю и сейчас я снова
-открыл вроде бы ставить запятые"""
+help_command = const["help"]
+start_command = const["start"]
+discription_command = const["discription"]
+savedfiles_command = const["savedfiles"]
+categories_message = const["categories"]
+everytenmin = const["tenmin"]
 
 
 # Создание бота
@@ -67,9 +34,10 @@ dp = Dispatcher()
 # Создание глобальных переменных
 sort = []
 categories = []
+members = {}
 action = ""
 Admin_ID = 0
-bd = db_manager("P3lv1c_bone.db")
+bd = db("P3lv1c_bone.db")
 bd.start()
 bd.create(
     "saves",
@@ -83,6 +51,7 @@ bd.create(
 for i in range(1, 8):
     categories.append(bd.get("categories", {"id": i})[1])
 
+bd.stop()
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
@@ -103,15 +72,6 @@ async def main(message):
     await message.answer(discription_command)
 
 
-"""# Команда для запуска рассылки напоминаний о расписании
-@dp.message(Command("zaprasp"))
-async def main(message):
-    lessons = classes()
-    await message.answer("Расписание запущено")
-
-    await message.answer(lessons)"""
-
-
 # Команда для сохранения сообщения
 @dp.message(Command("save"))
 async def main(message, command):
@@ -127,93 +87,53 @@ async def main(message, command):
     except ValueError:
         await message.answer(
             "Ошибка: неправильный формат команды. Пример:\n"
-            "/save <имя_категории> <Название>"
+            "/save <Категория> <Название>"
         )
         return
     global categories, id_category
-    category=category.lower()
+    category = category.lower()
+    # мега костыль
+    if category == "информационные":
+        category = "информационные системы и технологии"
+        name = name[21:]
+    elif category == "компьютерное":
+        category = "компьютерное зрение"
+        name = name[7:]
+    elif category == "русский":
+        category = "русский язык"
+        name = name[5:]
+    elif category == "шаблоны":
+        category = "шаблоны проектирования"
+        name = name[15:]
 
+    bd.start()
     if category not in categories:
-        id_category = bd.get('categories',{'name':"другое"})[0]
-        bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
+        id_category = bd.get("categories", {"name": "другое"})[0]
+        bd.insert(
+            "saves",
+            {
+                "mes_id": str(message.message_id),
+                "chat_id": str(message.chat.id),
+                "id_category": id_category,
+                "name": name,
+            },
+        )
         await message.reply(
             f"Так как еще нет категории <{category}> Ваше сообщение сохранено, в категорию: <Другое>"
         )
     else:
-        id_category = bd.get('categories',{'name':category.replace("_"," ")})[0]
-        bd.insert('saves',{'mes_id': str(message.message_id), 'chat_id': str(message.chat.id), 'id_category': id_category, 'name': name})
+        id_category = bd.get("categories", {"name": category})[0]
+        bd.insert(
+            "saves",
+            {
+                "mes_id": str(message.message_id),
+                "chat_id": str(message.chat.id),
+                "id_category": id_category,
+                "name": name,
+            },
+        )
         await message.reply("Ваше сообщение сохранено")
-
-
-
-# # Команда для удаления сохраненных сообщений, доступнатолько админу
-# @dp.message(Command("deletesavedfiles"))
-# async def main(message):
-#     truefalse = True
-#     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
-#     for x in member:
-#         if "member" in x:
-#             truefalse = False
-#         break
-#     if truefalse == False:
-#         await message.answer("Вы не обладаете правами администратора")
-#     else:
-#         global categories, Admin_ID
-
-#         Admin_ID = message.from_user.id
-
-#         # Инициализируем клавиатуру
-#         builder = InlineKeyboardBuilder()
-
-#         builder.add(
-#             *[
-#                 InlineKeyboardButton(text=item, callback_data="del_" + item)
-#                 for item in categories
-#             ]
-#         )
-
-#         # Указываем клавиатуру в ответе
-#         builder.adjust(3)
-#         await message.answer(deletesavedfiles_command, reply_markup=builder.as_markup())
-
-
-# # Вывод сохраненных названий для удаления
-# @dp.callback_query(F.data.startswith("del_"))
-# async def callback(callback):
-#     global sort, action, Admin_ID
-#     if callback.from_user.id == Admin_ID:
-#         action = callback.data.split("_")[1]
-#         builder = InlineKeyboardBuilder()
-
-#         category = filter(lambda x: x["Категория"] == action, sort)
-#         builder.add(
-#             *[
-#                 InlineKeyboardButton(
-#                     text=item["Имя"], callback_data="delet_" + item["Message_id"]
-#                 )
-#                 for item in category
-#             ]
-#         )
-
-#         builder.adjust(3)
-#         await callback.message.answer(
-#             deletecategories_message, reply_markup=builder.as_markup()
-#         )
-
-
-# # Удаление сохраненного ранее сообщения
-# @dp.callback_query(F.data.startswith("delet_"))
-# async def callback(callback):
-#     global sort, Admin_ID
-
-#     if callback.from_user.id == Admin_ID:
-#         message = callback.data.split("_")[1]
-
-#         category = filter(lambda x: x["Message_id"] == message, sort)
-
-#         for item in category:
-#             sort.remove(item)
-#         await callback.message.answer("Сохранённое сообщение удалено")
+    bd.stop()
 
 
 # Вывод сообщения по категориям
@@ -225,7 +145,9 @@ async def main(message):
     builder = InlineKeyboardBuilder()
     builder.add(
         *[
-            InlineKeyboardButton(text=item.capitalize(), callback_data="num_" + f'{num}')
+            InlineKeyboardButton(
+                text=item.capitalize(), callback_data="num_" + f"{num}"
+            )
             for num, item in enumerate(categories)
         ]
     )
@@ -233,29 +155,29 @@ async def main(message):
     # Указываем клавиатуру в ответе
     builder.adjust(1)
     await message.answer(savedfiles_command, reply_markup=builder.as_markup())
+    await message.delete()
 
 
 # Вывод сохраненных названий
 @dp.callback_query(F.data.startswith("num_"))
 async def callback(callback):
     global action, chat_id
-
-    action = int(callback.data.split('_')[1])+1
+    bd.start()
+    action = int(callback.data.split("_")[1]) + 1
     builder = InlineKeyboardBuilder()
 
-    names = bd.get_raw('saves',{"id_category": action, 'chat_id': chat_id})
-
+    names = bd.get_raw("saves", {"id_category": action, "chat_id": chat_id})
+    bd.stop()
     builder.add(
         *[
-            InlineKeyboardButton(
-                text=item[3], callback_data="numm_" + item[0]
-            )
+            InlineKeyboardButton(text=item[3], callback_data="numm_" + item[0])
             for item in names
         ]
     )
 
     builder.adjust(3)
     await callback.message.answer(categories_message, reply_markup=builder.as_markup())
+    await callback.message.delete()
 
 
 # Возвращает сохраненное ранее сообщение, по выбранному названию
@@ -264,10 +186,11 @@ async def callback(callback):
     global chat_id
     message = callback.data.split("_")[1]
     await bot.send_message(
-            chat_id=chat_id,
-            text="Вот ваше сообщение",
-            reply_to_message_id=message,
-        )
+        chat_id=chat_id,
+        text="Вот ваше сообщение",
+        reply_to_message_id=message,
+    )
+    await callback.message.delete()
 
 
 def punctuation():
@@ -298,19 +221,73 @@ async def audio(message):
     )
 
 
-# Пасхалка с Игорем
+# Очередь для математики
+@dp.message(Command("stmath"))
+async def Math(message):
+    global members
+    members.clear()
+
+    await message.answer(
+        "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /edmath"
+    )
+
+
+# Вывод очереди
+@dp.message(Command("edmath"))
+async def Math(message):
+    global members
+    conclusion = ""
+
+    for member in members.values():
+        conclusion += member + "\n"
+
+    await message.answer("Вот ваша очередь: \n" + conclusion)
+
+
+# Создание списка людей в группе
 @dp.message(F.content_type == ContentType.TEXT)
-async def Hello(message):
-    if "и чё" in message.text.lower() or "и че" in message.text.lower():
+async def Math(message):
+    global members
+
+    firstname = message.from_user.first_name
+    username = message.from_user.username
+    userid = message.from_user.id
+    member = "@" + username + " - " + firstname
+
+    if userid not in members.keys():
+        members[userid] = member
+
+    if (
+        "и" in message.text.lower().split()
+        and "че" in message.text.lower().split()
+        or "чё" in message.text.lower().split()
+    ):
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAJtC2WhNs5jRDj39GBrG9LGAUFt0U8sAAIvKgACWTYQSgyguNjuPct4NAQ",
         )
 
+    if "лебед" in message.text.lower() or "не растраивайся" in message.text.lower():
+        await bot.send_sticker(
+            message.chat.id,
+            sticker="CAACAgIAAxkBAAEEMrNl-9zOgfrh6GJz2n9EEy9c90jVOwACl1EAAvj6aEu3ZxRrYYnWIDQE",
+        )
+    if (
+        "пойдешь?" in message.text.lower()
+        or "пойдёшь?" in message.text.lower()
+        or "го?" in message.text.lower()
+    ):
+        await bot.send_sticker(
+            message.chat.id,
+            sticker="CAACAgIAAxkBAAEEMsVl-99H7tSaTw7pGicmX8U2MVAitQACZ0cAAsRFaEvviMV6epKAgzQE",
+        )
+    if "круто" in message.text.lower():
+        await bot.send_sticker(
+            message.chat.id,
+            sticker="CAACAgIAAxkBAAEEMsdl-9_GcjSK1rwFNntWiMRAepgcXwACgCUAAlWNCEpk32eI4XKYATQE",
+        )
+
 
 # Функция, которая запускает программу в боте
 if __name__ == "__main__":
-    try:
-        asyncio.run(dp.start_polling(bot))
-    except:
-        bd.stop()
+    asyncio.run(dp.start_polling(bot))
