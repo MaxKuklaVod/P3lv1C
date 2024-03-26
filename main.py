@@ -2,21 +2,21 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 import random
-from STT import STT, Punct
-from messege_bd import data_base as db
+from DopClasses.STT import STT, Punct
+from DopClasses.messege_bd import db_manager as db
 import json
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from threading import Timer
 
-with open("tokens.json") as complex_data:
+with open("Json/tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
 main_token = tokens["main_token"]
 
-with open("textconst.json", encoding="utf-8") as complex_data:
+with open("Json/textconst.json", encoding="utf-8") as complex_data:
     data = complex_data.read()
     const = json.loads(data)
 
