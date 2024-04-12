@@ -9,14 +9,15 @@ from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from threading import Timer
+from pathlib import Path
 
-with open("Json/tokens.json") as complex_data:
+with open(Path(__file__).parent/"Json"/"tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
 main_token = tokens["main_token"]
 
-with open("Json/textconst.json", encoding="utf-8") as complex_data:
+with open(Path(__file__).parent/"Json"/"textconst.json", encoding="utf-8") as complex_data:
     data = complex_data.read()
     const = json.loads(data)
 

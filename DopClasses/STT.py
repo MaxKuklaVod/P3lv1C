@@ -2,6 +2,7 @@ import soundfile as sf
 import requests
 import speech_recognition as sr
 from os import path
+from pathlib import Path
 import json
 
 # need
@@ -11,7 +12,7 @@ import json
 # requests
 
 # Взятие токена из json файла
-with open("tokens.json") as complex_data:
+with open(Path(__file__).parent.parent/"Json"/"tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 # Сам токен
