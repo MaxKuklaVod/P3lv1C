@@ -2,7 +2,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 import asyncio
 import random
-from DopClasses.STT import STT, Punct
+from DopClasses.STT import STT, STT_whisper
 from DopClasses.messege_bd import db_manager as db
 import json
 from aiogram.filters.command import Command
@@ -15,7 +15,7 @@ with open(Path(__file__).parent/"Json"/"tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["main_token"]
+main_token = tokens["test_token"]
 
 with open(Path(__file__).parent/"Json"/"textconst.json", encoding="utf-8") as complex_data:
     data = complex_data.read()
@@ -26,7 +26,6 @@ start_command = const["start"]
 discription_command = const["discription"]
 savedfiles_command = const["savedfiles"]
 categories_message = const["categories"]
-everytenmin = const["tenmin"]
 
 
 # Создание бота
@@ -195,33 +194,26 @@ async def callback(callback):
     await callback.message.delete()
 
 
-def punctuation():
-    _ = Punct(everytenmin)
-    print(_)
-    Timer(600, punctuation).start()
-
-
-punctuation()
-
-
 # Перевод из аудио в текст (STT)
 @dp.message(F.content_type == ContentType.VOICE)
 async def audio(message):
     edittext = ""
     # Download audio file
     file_id = await bot.get_file(message.voice.file_id)
-    await bot.download_file(file_id.file_path, "audio.ogg")
+    await bot.download_file(file_id.file_path, Path(__file__).parent/"DopClasses"/"audio.ogg")
 
     # Speech-to-Text convertation
-    edittext = STT("audio.ogg")
+    edittext = STT(Path(__file__).parent/"DopClasses"/"audio.ogg")
 
     msg = await message.reply(edittext)
 
-    punctual = Punct(edittext)
-    await bot.edit_message_text(
-        chat_id=str(message.chat.id), message_id=str(msg.message_id), text=punctual
-    )
-
+    try:
+        punctual = STT_whisper(edittext)
+        await bot.edit_message_text(
+            chat_id=str(message.chat.id), message_id=str(msg.message_id), text=punctual
+        )
+    except:
+        pass
 
 # Очередь для математики
 @dp.message(Command("stmath"))

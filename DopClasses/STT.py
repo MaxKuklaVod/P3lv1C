@@ -33,7 +33,7 @@ def STT_whisper(filename):
 def STT(path_to_file: str) -> str:
     # Чтение оригинального файла
     data, samplerate = sf.read(path_to_file)
-    out = "cur_STT.wav"
+    out = Path(__file__).parent/"cur_STT.wav"
 
     # временный wav файл
     sf.write(out, data, samplerate)
