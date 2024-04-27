@@ -2,6 +2,7 @@ import soundfile as sf
 import requests
 import speech_recognition as sr
 from os import path
+from pathlib import Path
 import json
 
 # need
@@ -11,7 +12,7 @@ import json
 # requests
 
 # Взятие токена из json файла
-with open("tokens.json") as complex_data:
+with open(Path(__file__).parent.parent/"Json"/"tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 # Сам токен
@@ -32,7 +33,7 @@ def STT_whisper(filename):
 def STT(path_to_file: str) -> str:
     # Чтение оригинального файла
     data, samplerate = sf.read(path_to_file)
-    out = "cur_STT.wav"
+    out = Path(__file__).parent/"cur_STT.wav"
 
     # временный wav файл
     sf.write(out, data, samplerate)

@@ -2,6 +2,7 @@ import pytz
 import json
 import asyncio
 import datetime
+from pathlib import Path
 from aiogram import Bot
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -28,7 +29,7 @@ apscheduler
 
 
 # Импорт данных для входа
-log_info = json.load(open('login_info.json'))
+log_info = json.load(open(Path(__file__).parent.parent/"Json"/"login_info.json"))
 
 mail_text = log_info['mail']
 password_text = log_info['password']
