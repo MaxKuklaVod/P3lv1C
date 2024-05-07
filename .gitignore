@@ -5,3 +5,4 @@ P3lv1c_bone.db
 audio.ogg
 cur_STT.wav
 __pycache__/
+*.tar.gz
