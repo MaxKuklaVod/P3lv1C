@@ -11,13 +11,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from threading import Timer
 from pathlib import Path
 
-with open(Path(__file__).parent/"Json"/"tokens.json") as complex_data:
+with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["main_token"]
+main_token = tokens["test_token"]
 
-with open(Path(__file__).parent/"Json"/"textconst.json", encoding="utf-8") as complex_data:
+with open(
+    Path(__file__).parent / "Json" / "textconst.json", encoding="utf-8"
+) as complex_data:
     data = complex_data.read()
     const = json.loads(data)
 
@@ -200,10 +202,12 @@ async def audio(message):
     edittext = ""
     # Download audio file
     file_id = await bot.get_file(message.voice.file_id)
-    await bot.download_file(file_id.file_path, Path(__file__).parent/"DopClasses"/"audio.ogg")
+    await bot.download_file(
+        file_id.file_path, Path(__file__).parent / "DopClasses" / "audio.ogg"
+    )
 
     # Speech-to-Text convertation
-    edittext = STT(Path(__file__).parent/"DopClasses"/"audio.ogg")
+    edittext = STT(Path(__file__).parent / "DopClasses" / "audio.ogg")
 
     msg = await message.reply(edittext)
 
@@ -214,6 +218,7 @@ async def audio(message):
         )
     except:
         pass
+
 
 # Очередь для математики
 @dp.message(Command("stmath"))
@@ -233,9 +238,9 @@ async def Math(message):
     conclusion = ""
 
     for i in range(len(members)):
-        random_member = random.choice(members.values())
-        conclusion += random_member + "\n"
-        members = {key: val for key, val in members.items() if val != random_member}
+        himfirstname = random.choice(list(members.values()))
+        conclusion += str(himfirstname) + "\n"
+        members = {key: val for key, val in members.items() if val != himfirstname}
 
     await message.answer("Вот ваша очередь: \n" + conclusion)
 
