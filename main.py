@@ -15,7 +15,7 @@ with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["main_token"]
+main_token = tokens["test_token"]
 
 with open(
     Path(__file__).parent / "Json" / "textconst.json", encoding="utf-8"
@@ -38,6 +38,7 @@ dp = Dispatcher()
 sort = []
 categories = []
 members = {}
+chat = ""
 action = ""
 Admin_ID = 0
 bd = db("P3lv1c_bone.db")
@@ -223,8 +224,9 @@ async def audio(message):
 # Очередь для математики
 @dp.message(Command("startqueue"))
 async def Math(message):
-    global members
+    global members, chat
     members.clear()
+    chat = message.chat.id
 
     await message.answer(
         "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /endqueue"
@@ -248,15 +250,16 @@ async def Math(message):
 # Создание списка людей в группе
 @dp.message(F.content_type == ContentType.TEXT)
 async def Math(message):
-    global members
+    global members, chat
+    
+    if chat == message.chat.id:
+        firstname = message.from_user.first_name
+        username = message.from_user.username
+        userid = message.from_user.id
+        member = "@" + username + " - " + firstname
 
-    firstname = message.from_user.first_name
-    username = message.from_user.username
-    userid = message.from_user.id
-    member = "@" + username + " - " + firstname
-
-    if userid not in members.keys():
-        members[userid] = member
+        if userid not in members.keys():
+            members[userid] = member
 
     if (
         "и" in message.text.lower().split()
