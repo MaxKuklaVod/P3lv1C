@@ -15,7 +15,7 @@ with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["test_token"]
+main_token = tokens["main_token"]
 
 with open(
     Path(__file__).parent / "Json" / "textconst.json", encoding="utf-8"
@@ -221,18 +221,18 @@ async def audio(message):
 
 
 # Очередь для математики
-@dp.message(Command("stmath"))
+@dp.message(Command("startqueue"))
 async def Math(message):
     global members
     members.clear()
 
     await message.answer(
-        "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /edmath"
+        "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /endqueue"
     )
 
 
 # Вывод очереди
-@dp.message(Command("edmath"))
+@dp.message(Command("endqueue"))
 async def Math(message):
     global members
     conclusion = ""
