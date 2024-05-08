@@ -2,10 +2,11 @@ import pytz
 import json
 import asyncio
 import datetime
-from pathlib import Path
+
 from aiogram import Bot
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from apscheduler.triggers.cron import CronTrigger
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -15,10 +16,10 @@ from selenium.webdriver.support import expected_conditions as EC
 # Код для запуска функции, повторяющей вызов расписания
 """
 scheduler = AsyncIOScheduler()
-scheduler.add_job(check_schedule, 'cron', hour='6-18', minute='30', second='0')
+scheduler.add_job(check_schedule, CronTrigger(hour='6-18', minute='0', second='0'),args=[mail_text,password_text,chat_id])
 scheduler.start()
 
-asyncio.get_event_loop().run_forever()
+asyncio.run(check_schedule(mail_text, password_text, chat_id))
 """
 
 # Библиотеки, требующие установки
@@ -29,7 +30,8 @@ apscheduler
 
 
 # Импорт данных для входа
-log_info = json.load(open(Path(__file__).parent.parent/"Json"/"login_info.json"))
+file = open("login_info.json")
+log_info = json.load(file)
 
 mail_text = log_info['mail']
 password_text = log_info['password']
