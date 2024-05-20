@@ -3,7 +3,7 @@ import json
 import asyncio
 import datetime
 import time
-
+from pathlib import Path
 from aiogram import Bot
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -31,11 +31,11 @@ apscheduler
 
 
 # Импорт данных для входа
-file = open("login_info.json")
-log_info = json.load(file)
+# file = open("login_info.json")
+# log_info = json.load(file)
 
-mail_text = log_info['mail']
-password_text = log_info['password']
+# mail_text = log_info['mail']
+# password_text = log_info['password']
 
 
 async def daily_classes(mail_arg, password_arg):
@@ -46,7 +46,7 @@ async def daily_classes(mail_arg, password_arg):
 
     # Запуск браузера
     opt = Options()
-    opt.add_argument("--headless")
+    #opt.add_argument("--headless")
     driver = webdriver.Firefox(options=opt)
     driver.get("https://bki.forlabs.ru/app/login")
 
@@ -216,8 +216,14 @@ async def weekly_schedule(mail_arg,password_arg):
 
 
 async def check_schedule(mail_arg,password_arg,chat_id):
+    with open(Path(__file__).parent.parent / "Json" / "tokens.json", encoding="utf-8") as complex_data:
+            data = complex_data.read()
+            tokens = json.loads(data)
+    channel=tokens['group']
+    main_token = tokens["test_token"]
+    bot=Bot(token=main_token)
     while True:
         job_result = await daily_classes(mail_arg, password_arg)
         if job_result is not None:
-            await Bot.send_message(chat_id=chat_id, text=job_result)
+            await bot.send_message(chat_id=channel, text=job_result)
         await asyncio.sleep(5400)  # Таймер на 1.5 часа

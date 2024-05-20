@@ -12,7 +12,7 @@ def create_bone():
     A.create("disciplines",{"id":"integer PRIMARY KEY", "name":'text','semester_id':'integer'},"FOREIGN KEY (semester_id) REFERENCES semesters(id)")
     A.create("saved",{'mes_id':'integer','chat_id':'integer','discipline_id':'integer','name':'text'},"FOREIGN KEY(chat_id) REFERENCES chats(id)",
     "FOREIGN KEY(discipline_id) REFERENCES disciplines(id)")
-    A.create("week_disciplines",{'discipline_id':'integer','day_id':'integer','pair_number':'integer'},"FOREIGN KEY (discipline_id) REFERENCES disciplines(id)",
+    A.create("week_disciplines",{'discipline_name':'text','day_id':'integer','pair_number':'integer'},"FOREIGN KEY (discipline_name) REFERENCES disciplines(name)",
             "FOREIGN KEY(day_id) REFERENCES week_days (id)",
             "FOREIGN KEY(pair_number) REFERENCES pairs(id)"  )
     

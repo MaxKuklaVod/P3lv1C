@@ -1,5 +1,6 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
+from DopClasses.Schedule import AsyncIOScheduler,check_schedule,CronTrigger
 import asyncio
 import random
 from DopClasses.STT import STT, STT_whisper
@@ -23,11 +24,20 @@ with open(
     data = complex_data.read()
     const = json.loads(data)
 
+with open(
+    Path(__file__).parent / "Json" / "login_info.json", encoding="utf-8"
+) as complex_data:
+    data = complex_data.read()
+    log_info = json.loads(data)
+
 help_command = const["help"]
 start_command = const["start"]
 discription_command = const["discription"]
 savedfiles_command = const["savedfiles"]
 categories_message = const["categories"]
+
+mail_text = log_info['mail']
+password_text = log_info['password']
 
 
 # Создание бота
@@ -212,6 +222,7 @@ async def audio(message):
 
     msg = await message.reply(edittext)
 
+    #TODO: ИСПРАВИТЬ!
     try:
         punctual = STT_whisper(edittext)
         await bot.edit_message_text(
@@ -251,13 +262,17 @@ async def Math(message):
 @dp.message(F.content_type == ContentType.TEXT)
 async def Math(message):
     global members, chat
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(check_schedule, CronTrigger(hour='6-18', minute='0', second='0'),args=[mail_text,password_text,'chat_id'])
+    scheduler.start()
+
+    await check_schedule(mail_text, password_text, 'chat_id')
 
     if chat == message.chat.id:
         firstname = message.from_user.first_name
         username = message.from_user.username
         userid = message.from_user.id
         member = "@" + username + " - " + firstname
-
         if userid not in members.keys():
             members[userid] = member
 
@@ -290,6 +305,7 @@ async def Math(message):
             message.chat.id,
             sticker="CAACAgIAAxkBAAEEMsdl-9_GcjSK1rwFNntWiMRAepgcXwACgCUAAlWNCEpk32eI4XKYATQE",
         )
+
 
 
 # Функция, которая запускает программу в боте
