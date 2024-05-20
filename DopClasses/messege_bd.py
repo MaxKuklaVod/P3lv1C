@@ -88,7 +88,7 @@ class db_manager:
         self.__connect.close()
 
     # создание таблицы
-    def create(self, name: str, cats: dict = {}):
+    def create(self, name: str, cats: dict = {},*args):
 
         self.categories = cats
 
@@ -101,6 +101,8 @@ class db_manager:
         # добавляем категории в команду
         for column in self.__keys:
             create_comand += f"{column} {self.categories[column]}, "
+        for column in args:
+            create_comand+=f'{column}'
 
         create_comand = create_comand.rstrip(", ")
         create_comand += ")"
