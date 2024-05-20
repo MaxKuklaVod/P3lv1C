@@ -251,7 +251,7 @@ async def Math(message):
 @dp.message(F.content_type == ContentType.TEXT)
 async def Math(message):
     global members, chat
-    
+
     if chat == message.chat.id:
         firstname = message.from_user.first_name
         username = message.from_user.username
@@ -277,9 +277,9 @@ async def Math(message):
             sticker="CAACAgIAAxkBAAEEMrNl-9zOgfrh6GJz2n9EEy9c90jVOwACl1EAAvj6aEu3ZxRrYYnWIDQE",
         )
     if (
-        "пойдешь?" in message.text.lower()
-        or "пойдёшь?" in message.text.lower()
-        or "го?" in message.text.lower()
+        "пойдешь?" in message.text.lower().split()
+        or "пойдёшь?" in message.text.lower().split()
+        or "го?" in message.text.lower().split()
     ):
         await bot.send_sticker(
             message.chat.id,
