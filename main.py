@@ -1,16 +1,19 @@
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import ContentType
 import asyncio
 import random
+import datetime
+import juliandate
+import json
+import sched
+import time
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import ContentType
 from DopClasses.STT import STT, STT_whisper
 from DopClasses.messege_bd import db_manager as db
-import json
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pathlib import Path
-import datetime
-import juliandate
+from DopClasses.sched_sender import send_schedule
 
 with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
@@ -34,6 +37,8 @@ categories_message = const["categories"]
 # Создание бота
 bot = Bot(token=main_token)
 dp = Dispatcher()
+
+send_schedule(bot)
 
 # Создание глобальных переменных
 sort = []

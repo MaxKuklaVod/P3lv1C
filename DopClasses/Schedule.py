@@ -3,6 +3,7 @@ import json
 import asyncio
 import datetime
 import time
+from DopClasses.schedule_saver import save_schedule
 from pathlib import Path
 from aiogram import Bot
 from selenium import webdriver
@@ -30,7 +31,7 @@ apscheduler
 """
 
 
-async def daily_classes(mail_arg, password_arg,day):
+def daily_classes(mail_arg, password_arg,day):
     '''
     На вход: логин, пароль
     Возвращает: словарь(ключи - время начала пары, значения - название и место проведения пары)
@@ -60,15 +61,17 @@ async def daily_classes(mail_arg, password_arg,day):
     login_button = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")
     login_button.click()
 
-    await asyncio.sleep(1)
+    time.sleep(3)
 
     # Переход на страницу с расписанием
     driver.get("https://bki.forlabs.ru/app/schedule")
 
+    time.sleep(3)
+
+
     current_day = day
     schedule = {}
 
-    await asyncio.sleep(2)
 
 
     # Заполнение словаря с парами
@@ -88,6 +91,7 @@ async def daily_classes(mail_arg, password_arg,day):
         # Исключение, срабатывающее при ненахождении элемента
         except NoSuchElementException:
             pass
+        #print(schedule)
 
     driver.close()
 
@@ -99,60 +103,8 @@ async def daily_classes(mail_arg, password_arg,day):
         return schedule
 
 
-# Функция для получения списка предметов в семестре
-async def list_of_classes(mail_arg, password_arg):
-    '''
-    На вход: логин и пароль
-    Возвращает: массив названий предметов в семестре
-    '''
 
-    # Создание массива для хранения названий предметов
-    classes_list = []
-
-    # Запуск браузера
-    opt = Options()
-    opt.add_argument("--headless")
-    driver = webdriver.Firefox(options=opt)
-    driver.get("https://bki.forlabs.ru/app/login")
-
-    # Ожидание элементов авторизации
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-        (By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")))
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located(
-        (By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")))
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")))
-
-    # Ввод логина и пароля, вход в аккаунт
-    login = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[1]/input")
-    login.send_keys(mail_arg)
-
-    password = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[2]/center/div/div/div[2]/input")
-    password.send_keys(password_arg)
-
-    login_button = driver.find_element(By.XPATH, "/html/body/div[3]/div/div/form/div/div[3]/center/button")
-    login_button.click()
-
-    await asyncio.sleep(1)
-
-    # Переход на вкладку со списком предметов
-    driver.get("https://bki.forlabs.ru/app/learning/187/studies")
-
-    await asyncio.sleep(2)
-
-    # Заполнение массива с названиями предметов
-    line = 1
-    while True:
-        try:
-            subject = driver.find_element(By.XPATH, f"/html/body/div/div[3]/div[2]/div[1]/ng-view/div[2]/div[2]/div[2]/div/div/table/tbody/tr[{line}]/td[1]/a")
-            classes_list.append(subject.get_attribute("innerHTML"))
-            line += 1
-        except NoSuchElementException:
-            driver.close()
-            return classes_list
-
-
-async def weekly_schedule(mail_arg,password_arg):
+def weekly_schedule(mail_arg,password_arg):
     # Создание словаря для хранения расписания по дням
     weekly_classes = {}
 
@@ -165,6 +117,7 @@ async def weekly_schedule(mail_arg,password_arg):
         if day_subjects is not None:
             weekly_classes[day+1] = day_subjects
     if weekly_classes != {}:
+        save_schedule(weekly_classes)
         return weekly_classes
 
 
