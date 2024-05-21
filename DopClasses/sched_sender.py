@@ -32,7 +32,15 @@ def send(pair):
     global bot
     bot.send_message('-1002071723643',pair)
 
+
+
+
+
+#TODO автоматизировать 
 def send_schedule():
+    
+    cur=time.time()
+    print(cur)
     db=db_manager("P3lv1c_bone.db")   
     db.start()
     db.delete("week_disciplines",{"day_id":"*"})
@@ -40,16 +48,16 @@ def send_schedule():
     global mail_token,password_token
     week_sched=weekly_schedule(mail_token,password_token)
     
-    i=0
-    for cur_day in week_sched:
+    # i=cur
+    # for cur_day in week_sched:
 
-        for cur_pair in week_sched[cur_day]:
-            i+=5
-            print(week_sched[cur_day][cur_pair][0])
-            scheduler.enter(i+5,2, send(week_sched[cur_day][cur_pair][0]))
-    scheduler.enter(100,2, send_schedule())
-    return scheduler
+    #     for cur_pair in week_sched[cur_day]:
+    #         i+=120
+    #         print(week_sched[cur_day][cur_pair][0])
+    #         scheduler.enterabs(i,2, send(week_sched[cur_day][cur_pair][0]))
+    # scheduler.enterabs(i+60,2, send_schedule())
+    # return scheduler
     #ран
 
-scheduler=send_schedule()
-scheduler.run()
+# scheduler=send_schedule()
+# scheduler.run()
