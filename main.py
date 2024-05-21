@@ -2,9 +2,8 @@ import asyncio
 import random
 import datetime
 import juliandate
-import json
 import sched
-import time
+import json
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import ContentType
 from DopClasses.STT import STT, STT_whisper
@@ -13,7 +12,8 @@ from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pathlib import Path
-from DopClasses.sched_sender import send_schedule
+
+
 
 with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
@@ -38,8 +38,8 @@ categories_message = const["categories"]
 bot = Bot(token=main_token)
 dp = Dispatcher()
 
-send_schedule(bot)
-
+# `scheduler=send_schedule()
+# scheduler.run()`
 # Создание глобальных переменных
 sort = []
 categories = []
@@ -339,7 +339,7 @@ async def Math(message):
             sticker="CAACAgIAAxkBAAEEMsdl-9_GcjSK1rwFNntWiMRAepgcXwACgCUAAlWNCEpk32eI4XKYATQE",
         )
 
-
+    
 # Функция, которая запускает программу в боте
 if __name__ == "__main__":
     asyncio.run(dp.start_polling(bot))
