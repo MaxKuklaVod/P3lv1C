@@ -1,23 +1,31 @@
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import ContentType
 import asyncio
 import random
-from DopClasses.STT import STT, STT_whisper
-from DopClasses.messege_bd import db_manager as db
+import datetime
+import juliandate
 import json
+import time
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import ContentType
+from DopClasses.STT import STT, STT_whisper
+from DopClasses.sched_sender import send_schedule
+from DopClasses.get_pair import get_pair
+from DopClasses.messege_bd import db_manager as db
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from threading import Timer
 from pathlib import Path
 
-with open(Path(__file__).parent/"Json"/"tokens.json") as complex_data:
+
+
+with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
 main_token = tokens["main_token"]
 
-with open(Path(__file__).parent/"Json"/"textconst.json", encoding="utf-8") as complex_data:
+with open(
+    Path(__file__).parent / "Json" / "textconst.json", encoding="utf-8"
+) as complex_data:
     data = complex_data.read()
     const = json.loads(data)
 
@@ -32,27 +40,22 @@ categories_message = const["categories"]
 bot = Bot(token=main_token)
 dp = Dispatcher()
 
+
+
 # Создание глобальных переменных
 sort = []
 categories = []
 members = {}
+chat = ""
+user_id = 0
+save_message = ""
 action = ""
+flag = False
+discipline_id = 0
 Admin_ID = 0
 bd = db("P3lv1c_bone.db")
-bd.start()
-bd.create(
-    "saves",
-    {
-        "mes_id": "text",
-        "chat_id": "text",
-        "id_category": "integer",
-        "name": "text",
-    },
-)
-for i in range(1, 8):
-    categories.append(bd.get("categories", {"id": i})[1])
 
-bd.stop()
+
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
@@ -72,117 +75,157 @@ async def main(message):
 async def main(message):
     await message.answer(discription_command)
 
+# Команда /pair, которая отправляет список команд
+@dp.message(Command("pair"))
+async def main(message):
+    mess=get_pair()
+    if mess is None:
+        await message.answer("Отдыхай, сейчас нет пар")
+    else:
+        await message.answer(f"сейчас пара {mess[0]}")
+
 
 # Команда для сохранения сообщения
 @dp.message(Command("save"))
-async def main(message, command):
-    # Если не переданы никакие аргументы, то
-    # command.args будет None
-    if command.args is None:
-        await message.answer("Ошибка: не переданы аргументы")
-        return
-    # Пробуем разделить аргументы на две части по первому встречному пробелу
-    try:
-        category, name = command.args.split(" ", maxsplit=1)
-    # Если получилось меньше двух частей, вылетит ValueError
-    except ValueError:
-        await message.answer(
-            "Ошибка: неправильный формат команды. Пример:\n"
-            "/save <Категория> <Название>"
-        )
-        return
-    global categories, id_category
-    category = category.lower()
-    # мега костыль
-    if category == "информационные":
-        category = "информационные системы и технологии"
-        name = name[21:]
-    elif category == "компьютерное":
-        category = "компьютерное зрение"
-        name = name[7:]
-    elif category == "русский":
-        category = "русский язык"
-        name = name[5:]
-    elif category == "шаблоны":
-        category = "шаблоны проектирования"
-        name = name[15:]
+async def main(message):
+
+    global user_id, chat_id, mes_id
+
+    user_id = message.from_user.id
+    chat_id = message.chat.id
+    mes_id = message.message_id
 
     bd.start()
-    if category not in categories:
-        id_category = bd.get("categories", {"name": "другое"})[0]
-        bd.insert(
-            "saves",
-            {
-                "mes_id": str(message.message_id),
-                "chat_id": str(message.chat.id),
-                "id_category": id_category,
-                "name": name,
-            },
-        )
-        await message.reply(
-            f"Так как еще нет категории <{category}> Ваше сообщение сохранено, в категорию: <Другое>"
-        )
-    else:
-        id_category = bd.get("categories", {"name": category})[0]
-        bd.insert(
-            "saves",
-            {
-                "mes_id": str(message.message_id),
-                "chat_id": str(message.chat.id),
-                "id_category": id_category,
-                "name": name,
-            },
-        )
-        await message.reply("Ваше сообщение сохранено")
-    bd.stop()
 
+    day_now = juliandate.from_gregorian(
+        datetime.datetime.now().year,
+        datetime.datetime.now().month,
+        datetime.datetime.now().day,
+    )
 
-# Вывод сообщения по категориям
-@dp.message(Command("savedfiles"))
-async def main(message):
-    global categories, chat_id
-    chat_id = message.chat.id
-    # Инициализируем клавиатуру
+    for i in range(1, 9):
+        line = bd.get("semesters", {"id": str(i)})
+
+        if day_now < line[2] and day_now > line[1]:
+            semester = line[0]
+
+    lines = bd.get_raw("disciplines", {"semester_id": semester})
+
     builder = InlineKeyboardBuilder()
     builder.add(
         *[
             InlineKeyboardButton(
-                text=item.capitalize(), callback_data="num_" + f"{num}"
+                text=item[1].capitalize(), callback_data="dist_" + f"{num}"
             )
-            for num, item in enumerate(categories)
+            for num, item in enumerate(lines)
         ]
     )
 
     # Указываем клавиатуру в ответе
     builder.adjust(1)
-    await message.answer(savedfiles_command, reply_markup=builder.as_markup())
+    await message.answer(
+        "Выберете категорию для сохранения", reply_markup=builder.as_markup()
+    )
     await message.delete()
 
 
-# Вывод сохраненных названий
-@dp.callback_query(F.data.startswith("num_"))
+@dp.callback_query(F.data.startswith("dist_"))
 async def callback(callback):
-    global action, chat_id
-    bd.start()
-    action = int(callback.data.split("_")[1]) + 1
-    builder = InlineKeyboardBuilder()
+    global flag, discipline_id
 
-    names = bd.get_raw("saves", {"id_category": action, "chat_id": chat_id})
-    bd.stop()
+    flag = True
+    discipline_id = int(callback.data.split("_")[1]) + 1
+
+    await callback.message.answer(
+        "Отправьте сообщение и напишите название, под которым хотите сохранить его."
+    )
+
+
+# Вывод сообщения по категориям
+@dp.message(Command("savedfiles"))
+async def main(message):
+
+    global chat_id
+
+    chat_id = message.chat.id
+
+    builder = InlineKeyboardBuilder()
     builder.add(
         *[
-            InlineKeyboardButton(text=item[3], callback_data="numm_" + item[0])
-            for item in names
+            InlineKeyboardButton(
+                text=str(num).capitalize(), callback_data="sem_" + f"{num}"
+            )
+            for num in range(1, 9)
         ]
     )
 
-    builder.adjust(3)
-    await callback.message.answer(categories_message, reply_markup=builder.as_markup())
+    # Указываем клавиатуру в ответе
+    builder.adjust(2)
+    await message.answer(
+        "Выберете семестр, вы котором хотите найти сохранение",
+        reply_markup=builder.as_markup(),
+    )
+    await message.delete()
+
+
+@dp.callback_query(F.data.startswith("sem_"))
+async def callback(callback):
+
+    semester_id = int(callback.data.split("_")[1])
+
+    bd.start()
+
+    lines = bd.get_raw("disciplines", {"semester_id": semester_id})
+
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        *[
+            InlineKeyboardButton(
+                text=item[1].capitalize(), callback_data="dister_" + f"{num}"
+            )
+            for num, item in enumerate(lines)
+        ]
+    )
+    bd.stop()
+    builder.adjust(1)
+    await callback.message.answer(
+        "Выберете дисциплину, в которой хотите найти сообщение",
+        reply_markup=builder.as_markup(),
+    )
+    await callback.message.delete()
+
+
+@dp.callback_query(F.data.startswith("dister_"))
+async def callback(callback):
+
+    global chat_id
+
+    discipline_id = int(callback.data.split("_")[1]) + 1
+
+    bd.start()
+
+    lines = bd.get_raw("saved", {"discipline_id": discipline_id, "chat_id": chat_id})
+
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        *[
+            InlineKeyboardButton(
+                text=item[3].capitalize(), callback_data="name_" + str(item[0])
+            )
+            for item in lines
+        ]
+    )
+    bd.stop()
+    builder.adjust(1)
+    await callback.message.answer(
+        "Выберете название сохранения",
+        reply_markup=builder.as_markup(),
+    )
     await callback.message.delete()
 
 
 # Возвращает сохраненное ранее сообщение, по выбранному названию
-@dp.callback_query(F.data.startswith("numm_"))
+@dp.callback_query(F.data.startswith("name_"))
 async def callback(callback):
     global chat_id
     message = callback.data.split("_")[1]
@@ -200,10 +243,12 @@ async def audio(message):
     edittext = ""
     # Download audio file
     file_id = await bot.get_file(message.voice.file_id)
-    await bot.download_file(file_id.file_path, Path(__file__).parent/"DopClasses"/"audio.ogg")
+    await bot.download_file(
+        file_id.file_path, Path(__file__).parent / "DopClasses" / "audio.ogg"
+    )
 
     # Speech-to-Text convertation
-    edittext = STT(Path(__file__).parent/"DopClasses"/"audio.ogg")
+    edittext = STT(Path(__file__).parent / "DopClasses" / "audio.ogg")
 
     msg = await message.reply(edittext)
 
@@ -215,27 +260,29 @@ async def audio(message):
     except:
         pass
 
+
 # Очередь для математики
-@dp.message(Command("stmath"))
+@dp.message(Command("startqueue"))
 async def Math(message):
-    global members
+    global members, chat
     members.clear()
+    chat = message.chat.id
 
     await message.answer(
-        "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /edmath"
+        "Кто хочет участвовать в очереди, напишите любое сообщение. Когда закончите, напишите команду /endqueue"
     )
 
 
 # Вывод очереди
-@dp.message(Command("edmath"))
+@dp.message(Command("endqueue"))
 async def Math(message):
     global members
     conclusion = ""
 
     for i in range(len(members)):
-        random_member = random.choice(members.values())
-        conclusion += random_member + "\n"
-        members = {key: val for key, val in members.items() if val != random_member}
+        himfirstname = random.choice(list(members.values()))
+        conclusion += str(himfirstname) + "\n"
+        members = {key: val for key, val in members.items() if val != himfirstname}
 
     await message.answer("Вот ваша очередь: \n" + conclusion)
 
@@ -243,15 +290,37 @@ async def Math(message):
 # Создание списка людей в группе
 @dp.message(F.content_type == ContentType.TEXT)
 async def Math(message):
-    global members
+    global members, chat, user_id, flag, discipline_id
 
-    firstname = message.from_user.first_name
-    username = message.from_user.username
-    userid = message.from_user.id
-    member = "@" + username + " - " + firstname
+    if message.from_user.id == user_id and flag:
+        bd.start()
 
-    if userid not in members.keys():
-        members[userid] = member
+        bd.insert(
+            "saved",
+            {
+                "mes_id": str(message.message_id),
+                "chat_id": str(message.chat.id),
+                "discipline_id": discipline_id,
+                "name": message.text,
+            },
+        )
+        bd.stop()
+        flag = False
+        await message.answer("Ваше сообщение сохранено")
+
+    bd.start()
+    if bd.get("chats", {"id": str(message.chat.id)}) is None:
+        bd.insert("chats", {"id": str(message.chat.id), "name": message.chat.title})
+    bd.stop()
+
+    if chat == message.chat.id:
+        firstname = message.from_user.first_name
+        username = message.from_user.username
+        userid = message.from_user.id
+        member = "@" + username + " - " + firstname
+
+        if userid not in members.keys():
+            members[userid] = member
 
     if (
         "и" in message.text.lower().split()
@@ -269,9 +338,9 @@ async def Math(message):
             sticker="CAACAgIAAxkBAAEEMrNl-9zOgfrh6GJz2n9EEy9c90jVOwACl1EAAvj6aEu3ZxRrYYnWIDQE",
         )
     if (
-        "пойдешь?" in message.text.lower()
-        or "пойдёшь?" in message.text.lower()
-        or "го?" in message.text.lower()
+        "пойдешь?" in message.text.lower().split()
+        or "пойдёшь?" in message.text.lower().split()
+        or "го?" in message.text.lower().split()
     ):
         await bot.send_sticker(
             message.chat.id,
@@ -284,6 +353,23 @@ async def Math(message):
         )
 
 
+
+async def scheduler():
+    while True:
+
+        send_schedule()
+
+        await asyncio.sleep(86400)  # Ждем 1 секунду перед проверкой времени
+
+
+
+async def main():
+    task1 = asyncio.create_task(dp.start_polling(bot))
+    task2 = asyncio.create_task(scheduler())
+    await asyncio.gather(task1, task2)
+
+
+
 # Функция, которая запускает программу в боте
-if __name__ == "__main__":
-    asyncio.run(dp.start_polling(bot))
+if __name__ == "__main__":   
+    asyncio.run(main())
