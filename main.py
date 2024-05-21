@@ -21,7 +21,7 @@ with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["main_token"]
+main_token = tokens["test_token"]
 
 with open(
     Path(__file__).parent / "Json" / "textconst.json", encoding="utf-8"

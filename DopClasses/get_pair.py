@@ -1,5 +1,6 @@
 import datetime
 from DopClasses.messege_bd import db_manager
+from zoneinfo import ZoneInfo
 
 bd = db_manager("P3lv1c_bone.db")
 bd.start()
@@ -29,14 +30,20 @@ def get_pair_name(day,number):
 def get_pair():
     global pairs
     #cur_time=datetime.datetime.strptime("21-05-2024/11:41",'%d-%m-%Y/%H:%M')
-    cur_time=datetime.datetime.now()
+    cur_time=datetime.datetime.now(tz=ZoneInfo('Europe/Moscow'))
+
+    
+    
     pair_ranges_by_numbers=get_number()
 
     pair=None
 
     day=cur_time.weekday()+1
     date_str=cur_time.strftime('%d-%m-%Y')
+    time_str=cur_time.strftime('%H:%M')
 
+    cur_time=datetime.datetime.strptime(date_str+'/'+time_str,'%d-%m-%Y/%H:%M')
+    print(cur_time)
     for cur_pair in range(1,8):
         start=datetime.datetime.strptime(date_str+'/'+pair_ranges_by_numbers[cur_pair][0],'%d-%m-%Y/%H:%M')
         finish=datetime.datetime.strptime(date_str+'/'+pair_ranges_by_numbers[cur_pair][1],'%d-%m-%Y/%H:%M')

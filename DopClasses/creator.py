@@ -168,13 +168,13 @@ def create_bone():
         A.insert("week_days", {"id": str(cur_id), "name": week_days[cur_id]})
 
     pairs = {
-        1: "8:30",
-        2: "10:10",
-        3: "11:50",
-        4: "13:50",
-        5: "15:30",
-        6: "17:10",
-        7: "18:50",
+        1: "3:30",
+        2: "5:10",
+        3: "6:50",
+        4: "8:50",
+        5: "10:30",
+        6: "12:10",
+        7: "13:50",
     }
     for cur_id in list(pairs.keys()):
         print(cur_id)
