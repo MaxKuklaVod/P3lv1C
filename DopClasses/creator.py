@@ -29,8 +29,7 @@ def create_bone():
     )
     A.create(
         "week_disciplines",
-        {"discipline_id": "integer", "day_id": "integer", "pair_number": "integer"},
-        "FOREIGN KEY (discipline_id) REFERENCES disciplines(id)",
+        {"discipline_name": "text", "day_id": "integer", "pair_number": "integer"},
         "FOREIGN KEY(day_id) REFERENCES week_days (id)",
         "FOREIGN KEY(pair_number) REFERENCES pairs(id)",
     )

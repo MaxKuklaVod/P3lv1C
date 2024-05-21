@@ -1,22 +1,27 @@
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import ContentType
 import asyncio
 import random
-from DopClasses.STT import STT, STT_whisper
-from DopClasses.messege_bd import db_manager as db
+import datetime
+import juliandate
 import json
+import time
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import ContentType
+from DopClasses.STT import STT, STT_whisper
+from DopClasses.sched_sender import send_schedule
+from DopClasses.get_pair import get_pair
+from DopClasses.messege_bd import db_manager as db
 from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pathlib import Path
-import datetime
-import juliandate
+
+
 
 with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
     data = complex_data.read()
     tokens = json.loads(data)
 
-main_token = tokens["test_token"]
+main_token = tokens["main_token"]
 
 with open(
     Path(__file__).parent / "Json" / "textconst.json", encoding="utf-8"
@@ -35,6 +40,8 @@ categories_message = const["categories"]
 bot = Bot(token=main_token)
 dp = Dispatcher()
 
+
+
 # Создание глобальных переменных
 sort = []
 categories = []
@@ -47,6 +54,8 @@ flag = False
 discipline_id = 0
 Admin_ID = 0
 bd = db("P3lv1c_bone.db")
+
+
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
@@ -65,6 +74,15 @@ async def main(message):
 @dp.message(Command("discription"))
 async def main(message):
     await message.answer(discription_command)
+
+# Команда /pair, которая отправляет список команд
+@dp.message(Command("pair"))
+async def main(message):
+    mess=get_pair()
+    if mess is None:
+        await message.answer("Отдыхай, сейчас нет пар")
+    else:
+        await message.answer(f"сейчас пара {mess[0]}")
 
 
 # Команда для сохранения сообщения
@@ -335,6 +353,23 @@ async def Math(message):
         )
 
 
+
+async def scheduler():
+    while True:
+
+        send_schedule()
+
+        await asyncio.sleep(86400)  # Ждем 1 секунду перед проверкой времени
+
+
+
+async def main():
+    task1 = asyncio.create_task(dp.start_polling(bot))
+    task2 = asyncio.create_task(scheduler())
+    await asyncio.gather(task1, task2)
+
+
+
 # Функция, которая запускает программу в боте
-if __name__ == "__main__":
-    asyncio.run(dp.start_polling(bot))
+if __name__ == "__main__":   
+    asyncio.run(main())
