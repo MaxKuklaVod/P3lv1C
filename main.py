@@ -1,5 +1,5 @@
 import asyncio
-import random
+from random import random
 import datetime
 import re
 import juliandate
