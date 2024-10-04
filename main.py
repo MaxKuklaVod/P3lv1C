@@ -1,5 +1,5 @@
 import asyncio
-from random import random
+import random
 import datetime
 import re
 import juliandate
@@ -317,7 +317,7 @@ async def Math(message):
             members[userid] = member
 
     if rmatch(message.text, r"^и ч[её]$") or (
-        rmatch(message.text, r"и ч[её]") and random() >= 0.9
+        rmatch(message.text, r"и ч[её]") and random.random() >= 0.9
     ):
         await bot.send_sticker(
             message.chat.id,
@@ -325,7 +325,8 @@ async def Math(message):
         )
 
     if rmatch(message.text, r"^лебед[а-я]*$") or (
-        rmatch(message.text, r"(лебед)|(не\s+рас{1,2}траива[а-я]*)") and random() >= 0.8
+        rmatch(message.text, r"(лебед)|(не\s+рас{1,2}траива[а-я]*)")
+        and random.random() >= 0.8
     ):
         await bot.send_sticker(
             message.chat.id,
@@ -333,7 +334,7 @@ async def Math(message):
         )
 
     if rmatch(message.text, r"^(пойд[её]шь)|(го)\?$") or (
-        rmatch(message.text, r"(пойдешь)|(го)\?") and random() >= 0.9
+        rmatch(message.text, r"(пойдешь)|(го)\?") and random.random() >= 0.9
     ):
         await bot.send_sticker(
             message.chat.id,
@@ -341,7 +342,7 @@ async def Math(message):
         )
 
     if rmatch(message.text, r"^круто[а-я]*$") or (
-        rmatch(message.text, r"круто[а-я]*") and random() >= 0.9
+        rmatch(message.text, r"круто[а-я]*") and random.random() >= 0.9
     ):
         await bot.send_sticker(
             message.chat.id,
