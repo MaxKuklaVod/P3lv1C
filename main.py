@@ -1,6 +1,7 @@
 import asyncio
 import random
 import datetime
+import re
 import juliandate
 import json
 import time
@@ -14,7 +15,6 @@ from aiogram.filters.command import Command
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pathlib import Path
-
 
 
 with open(Path(__file__).parent / "Json" / "tokens.json") as complex_data:
@@ -41,7 +41,6 @@ bot = Bot(token=main_token)
 dp = Dispatcher()
 
 
-
 # Создание глобальных переменных
 sort = []
 categories = []
@@ -54,8 +53,6 @@ flag = False
 discipline_id = 0
 Admin_ID = 0
 bd = db("P3lv1c_bone.db")
-
-
 
 
 # Команда /start - начальная команда при работе с ботом, которая отпраляет сообщение приветствия
@@ -75,10 +72,11 @@ async def main(message):
 async def main(message):
     await message.answer(discription_command)
 
+
 # Команда /pair, которая отправляет список команд
 @dp.message(Command("pair"))
 async def main(message):
-    mess=get_pair()
+    mess = get_pair()
     if mess is None:
         await message.answer("Отдыхай, сейчас нет пар")
     else:
@@ -88,7 +86,6 @@ async def main(message):
 # Команда для сохранения сообщения
 @dp.message(Command("save"))
 async def main(message):
-
     global user_id, chat_id, mes_id
 
     user_id = message.from_user.id
@@ -144,7 +141,6 @@ async def callback(callback):
 # Вывод сообщения по категориям
 @dp.message(Command("savedfiles"))
 async def main(message):
-
     global chat_id
 
     chat_id = message.chat.id
@@ -170,7 +166,6 @@ async def main(message):
 
 @dp.callback_query(F.data.startswith("sem_"))
 async def callback(callback):
-
     semester_id = int(callback.data.split("_")[1])
 
     bd.start()
@@ -197,7 +192,6 @@ async def callback(callback):
 
 @dp.callback_query(F.data.startswith("dister_"))
 async def callback(callback):
-
     global chat_id
 
     discipline_id = int(callback.data.split("_")[1]) + 1
@@ -322,45 +316,59 @@ async def Math(message):
         if userid not in members.keys():
             members[userid] = member
 
-    if (
-        "и" in message.text.lower().split()
-        and "че" in message.text.lower().split()
-        or "чё" in message.text.lower().split()
+    if rmatch(message.text, r"^и ч[её]$") or (
+        rmatch(message.text, r"и ч[её]") and random() >= 0.9
     ):
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAJtC2WhNs5jRDj39GBrG9LGAUFt0U8sAAIvKgACWTYQSgyguNjuPct4NAQ",
         )
 
-    if "лебед" in message.text.lower() or "не растраивайся" in message.text.lower():
+    if rmatch(message.text, r"^лебед[а-я]*$") or (
+        rmatch(message.text, r"(лебед)|(не\s+рас{1,2}траива[а-я]*)") and random() >= 0.8
+    ):
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAEEMrNl-9zOgfrh6GJz2n9EEy9c90jVOwACl1EAAvj6aEu3ZxRrYYnWIDQE",
         )
-    if (
-        "пойдешь?" in message.text.lower().split()
-        or "пойдёшь?" in message.text.lower().split()
-        or "го?" in message.text.lower().split()
+
+    if rmatch(message.text, r"^(пойд[её]шь)|(го)\?$") or (
+        rmatch(message.text, r"(пойдешь)|(го)\?") and random() >= 0.9
     ):
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAEEMsVl-99H7tSaTw7pGicmX8U2MVAitQACZ0cAAsRFaEvviMV6epKAgzQE",
         )
-    if "круто" in message.text.lower():
+
+    if rmatch(message.text, r"^круто[а-я]*$") or (
+        rmatch(message.text, r"круто[а-я]*") and random() >= 0.9
+    ):
         await bot.send_sticker(
             message.chat.id,
             sticker="CAACAgIAAxkBAAEEMsdl-9_GcjSK1rwFNntWiMRAepgcXwACgCUAAlWNCEpk32eI4XKYATQE",
         )
 
 
+def rmatch(text: str, pattern: str, ignore_case: bool = True) -> bool:
+    """
+    Ищет в тексте хотя бы одну подстроку, соответствующую регулярному выражению
+
+    Args:
+    text (str): Текст, в котором искать подстроки
+    pattern (str): Регулярное выражение
+    ignore_case (bool): Игнорировать ли регистр букв при поиске
+
+    Returns:
+    bool: True если подстрока найдена в тексте
+    """
+    return re.search(pattern, text, re.IGNORECASE if ignore_case else 0) is not None
+
 
 async def scheduler():
     while True:
-
         send_schedule()
 
         await asyncio.sleep(86400)  # Ждем 1 секунду перед проверкой времени
-
 
 
 async def main():
@@ -369,7 +377,6 @@ async def main():
     await asyncio.gather(task1, task2)
 
 
-
 # Функция, которая запускает программу в боте
-if __name__ == "__main__":   
+if __name__ == "__main__":
     asyncio.run(main())
